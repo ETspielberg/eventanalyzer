@@ -1,21 +1,20 @@
 package unidue.ub.eventanalyzer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Expression;
+import unidue.ub.media.monographs.Item;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 
 /**
  * Calculates <code>Eventanalysis</code> from list of <code>Event</code>-objects
@@ -243,34 +242,6 @@ public class EventAnalyzer {
 			analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
 		}
 
-	}
-
-	/**
-	 * As an alternative, the Eventanalysis-object can also be created using
-	 * a Document-object. The description is set to the docNumber.
-	 * 
-	 * @param document
-	 *            A Document, that is one edition with a given docNumber.
-	 * @param scp
-	 *            a Stockcontrol-objects containing the main
-	 *            parameters for the calculation.
-	 */
-	public EventAnalyzer(Manifestation document, Stockcontrol scp) {
-		this(document.getEvents(), document.getTitleID(), scp);
-	}
-
-	/**
-	 * As an alternative, the Eventanalysis-object can also be created using
-	 * a Work-object. The description is set to the base shelfmark.
-	 * 
-	 * @param work
-	 *            A Work, that is many editions with a given base shelfmark.
-	 * @param scp
-	 *            a Stockcontrol-objects containing the main
-	 *            parameters for the calculation.
-	 */
-	public EventAnalyzer(Expression work, Stockcontrol scp) {
-		this(work.getEvents(), work.getShelfmarkBase(), scp);
 	}
 
 	/**
