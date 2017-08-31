@@ -7,15 +7,26 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Manifestation;
+import unidue.ub.settings.fachref.Stockcontrol;
+
 
 @Configuration
 @EnableBatchProcessing
 public class BatchConfiguration {
+
+    @Value("#{jobParameters['identifer']}")
+    private String identifier;
+
+    @Value("${ub.statistics.settings.url}")
+    private String settingsUrl;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -24,15 +35,42 @@ public class BatchConfiguration {
     public StepBuilderFactory stepBuilderFactory;
 
     @Bean
+    public RestTemplate notationTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public RestTemplate stockcontrolTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public Stockcontrol stockcontrol() {;
+        ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
+                settingsUrl + "/stockcontrol/" + identifier ,
+                Stockcontrol.class
+        );
+        Stockcontrol stockcontrol = response.getBody();
+        return stockcontrol;
+    }
+
+    @Bean
+    public RestTemplate getterTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public ManifestationReader reader() {
         ManifestationReader reader = new ManifestationReader();
-        reader.setNotationQuery("VNA");
+        reader.setNotationTemplate(notationTemplate())
+                .setRestTemplate(getterTemplate())
+                .setStockcontrol(stockcontrol());
         return reader;
     }
 
     @Bean
-    public AnalysisProcessor processor() {
-        return new AnalysisProcessor();
+    public ManifestationProcessor processor() {
+        return new ManifestationProcessor();
     }
 
     @Bean
@@ -53,7 +91,7 @@ public class BatchConfiguration {
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<Person, Person> chunk(10)
+                .<Manifestation, Eventanalysis> chunk(10)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())

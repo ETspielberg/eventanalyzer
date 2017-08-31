@@ -1,26 +1,28 @@
 package unidue.ub.eventanalyzer;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.Assert;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
+import unidue.ub.settings.fachref.Stockcontrol;
 
-import javax.batch.api.chunk.ItemReader;
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 
-public class ManifestationReader implements ItemReader{
+public class ManifestationReader implements ItemReader<Manifestation> {
 
-    private boolean noInput;
+    private RestTemplate restTemplate;
 
-    private String notationQuery;
+    private RestTemplate notationTemplate;
+
+    private Stockcontrol stockcontrol;
+
+    private int nextManifestationIndex = 0;
+
+    private List<Manifestation> manifestationData;
 
     @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
@@ -28,57 +30,80 @@ public class ManifestationReader implements ItemReader{
     @Value("${ub.statistics.getter.url}")
     private String getterURL;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    ManifestationReader(Stockcontrol stockcontrol, RestTemplate restTemplate) {
+        this.stockcontrol = stockcontrol;
+        this.restTemplate = restTemplate;
+        nextManifestationIndex = 0;
+    }
 
-    private Iterator<Manifestation> iterator;
+    ManifestationReader() {
+        nextManifestationIndex = 0;
+    }
+
+    public ManifestationReader setRestTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+        return this;
+    }
+
+    public ManifestationReader setNotationTemplate(RestTemplate notationTemplate) {
+        this.notationTemplate = notationTemplate;
+        return this;
+    }
+
+    public ManifestationReader setStockcontrol(Stockcontrol stockcontrol) {
+        this.stockcontrol = stockcontrol;
+        return this;
+    }
 
     @Override
-    public void open(Serializable serializable) throws Exception {
-        Assert.notNull(notationQuery, "Input notations must be set");
-        noInput = true;
-
-        List<Notation> notations;
-        String notationsAsJson = getObject(settingsUrl + "/notation/search/findByNotationRange?notationRange=" + notationQuery);
-        notations = mapper.readValue(notationsAsJson, new TypeReference<List<Notation>>(){});
-        List<Manifestation> manifestations= new ArrayList<>();
-        for (Notation notation : notations) {
-            String manifestationsAsJSON = getObject(getterURL + "/manifestations?identifier=" + notation + "&mode=notation");
-            List<Manifestation> manifestationsInd = mapper.readValue(manifestationsAsJSON, new TypeReference<List<Manifestation>>() {
-            });
-            manifestations.addAll(manifestationsInd);
+    public Manifestation read() throws Exception {
+        if (noManifestationsFound()) {
+            collectManifestation();
         }
-        if (manifestations.size() > 0)
-            noInput = false;
-        iterator = manifestations.iterator();
+        Manifestation nextManifestation = null;
+        if (nextManifestationIndex < manifestationData.size()) {
+            nextManifestation = manifestationData.get(nextManifestationIndex);
+            nextManifestationIndex++;
+        }
+        return nextManifestation;
     }
 
-    @Override
-    public void close() {
-
+    private void collectManifestation() {
+        List<Notation> notations = new ArrayList<>();
+        String[] notationGroupStrings;
+        if (stockcontrol.getSystemCode().contains(",")) {
+            notationGroupStrings = stockcontrol.getSystemCode().split(",");
+        } else {
+            notationGroupStrings = new String[] {stockcontrol.getSystemCode()};
+        }
+        for (String notationGroupString : notationGroupStrings) {
+            if (notationGroupString.contains("-")) {
+                String startNotation = notationGroupString.substring(0,notationGroupString.indexOf("-"));
+                String endNotation = notationGroupString.substring(notationGroupString.indexOf("-") + 1, notationGroupString.length());
+                ResponseEntity<Notation[]> response = notationTemplate.getForEntity(
+                        settingsUrl + "/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation,
+                        Notation[].class
+                );
+                notations.addAll(Arrays.asList(response.getBody()));
+            } else {
+                ResponseEntity<Notation[]> response = notationTemplate.getForEntity(
+                        settingsUrl + "/notation/search/getNotationListForNotationgroup?notationGroupName=" + notationGroupString,
+                        Notation[].class
+                );
+                notations.addAll(Arrays.asList(response.getBody()));
+            }
+        }
+        manifestationData = new ArrayList<>();
+        for (Notation notation : notations) {
+            ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
+                    getterURL + "/manifestations?identifier=" + notation.getNotation() + "&mode=notation",
+                    Manifestation[].class
+            );
+            manifestationData.addAll(Arrays.asList(manifestations.getBody()));
+        }
     }
 
-    @Override
-    public Manifestation readItem() throws Exception {
-        return iterator.next();
-    }
-
-    @Override
-    public Serializable checkpointInfo() throws Exception {
-        return null;
-    }
-
-    private String getObject(String url) throws IOException {
-        HttpClient client = new HttpClient();
-        GetMethod get = new GetMethod(url);
-        client.executeMethod(get);
-        return get.getResponseBodyAsString();
-    }
-
-    public void setNotationQuery(String notationQuery) {
-        this.notationQuery = notationQuery;
-    }
-
-    public boolean isNoInput() {
-        return noInput;
+    private boolean noManifestationsFound() {
+        return (this.manifestationData == null);
     }
 }

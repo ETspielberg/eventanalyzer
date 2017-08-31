@@ -1,8 +1,5 @@
 package unidue.ub.eventanalyzer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,23 +8,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
+import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Item;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Scope(value = "step")
-public class AnalysisProcessor implements ItemProcessor<Manifestation,Eventanalysis> {
+public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalysis> {
 
-    private static final Logger log = LoggerFactory.getLogger(AnalysisProcessor.class);
-
-    @Value("#{jobParameters['stockcontrol']}")
-    private String stockcontrol;
+    private static final Logger log = LoggerFactory.getLogger(ExpressionProcessor.class);
 
     @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
@@ -50,19 +44,16 @@ public class AnalysisProcessor implements ItemProcessor<Manifestation,Eventanaly
     @Value("${ub.statistics.status.lendable}")
     private String lendable;
 
-    private ObjectMapper mapper = new ObjectMapper();
-
+    private Stockcontrol stockcontrol;
 
     @Override
-    public Eventanalysis process(final Manifestation manifestation) throws Exception {
-        log.info("analyzing manifestation " + manifestation.getTitleID() + " and shelfmark " + manifestation.getShelfmark());
+    public Eventanalysis process(final Expression expression) throws Exception {
+        log.info("analyzing manifestation " + expression.getId() + " and shelfmark " + expression.getShelfmarkBase());
 
-        String json = getObject(settingsUrl + "/stockcontrol/" + stockcontrol);
-        Stockcontrol scp = mapper.readValue(json, Stockcontrol.class);
-        String description = manifestation.getTitleID();
+        String description = expression.getId();
         List<Event> events = new ArrayList<>();
-        ItemFilter itemFilter = new ItemFilter(scp.getCollections(),scp.getMaterials());
-        for (Item item : manifestation.getItems()) {
+        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
+        for (Item item : expression.getItems()) {
             if (itemFilter.matches(item))
                 events.addAll(item.getEvents());
         }
@@ -74,12 +65,12 @@ public class AnalysisProcessor implements ItemProcessor<Manifestation,Eventanaly
         analysis.setTitleId(description);
         analysis.setDate(new Date());
 
-        if (scp.getIdentifier() != null)
-            analysis.setStockcontrolId(scp.getIdentifier());
+        if (stockcontrol.getIdentifier() != null)
+            analysis.setStockcontrolId(stockcontrol.getIdentifier());
 
-        LocalDate scpStartDate = TODAY.minus((long) scp.getYearsToAverage(), ChronoUnit.YEARS);
-        LocalDate scpStartYearRequests = TODAY.minus((long) scp.getYearsOfRequests(), ChronoUnit.YEARS);
-        LocalDate scpMiniumumDate = TODAY.minus((long) scp.getMinimumYears(), ChronoUnit.YEARS);
+        LocalDate scpStartDate = TODAY.minus((long) stockcontrol.getYearsToAverage(), ChronoUnit.YEARS);
+        LocalDate scpStartYearRequests = TODAY.minus((long) stockcontrol.getYearsOfRequests(), ChronoUnit.YEARS);
+        LocalDate scpMiniumumDate = TODAY.minus((long) stockcontrol.getMinimumYears(), ChronoUnit.YEARS);
         Collections.sort(events);
 
         // prepare the timeline to evaluate the relative lent
@@ -201,34 +192,34 @@ public class AnalysisProcessor implements ItemProcessor<Manifestation,Eventanaly
 
         if (analysis.getMaxRelativeLoan() != 0) {
             double ratio = analysis.getMeanRelativeLoan()/analysis.getMaxRelativeLoan();
-            if (scp.getStaticBuffer() < 1 && scp.getVariableBuffer() < 1)
+            if (stockcontrol.getStaticBuffer() < 1 && stockcontrol.getVariableBuffer() < 1)
                 analysis.setProposedDeletion((int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1
-                        - scp.getStaticBuffer()
-                        - scp.getVariableBuffer() *ratio)));
-            else if (scp.getStaticBuffer() >= 1 && scp.getVariableBuffer() < 1)
+                        - stockcontrol.getStaticBuffer()
+                        - stockcontrol.getVariableBuffer() *ratio)));
+            else if (stockcontrol.getStaticBuffer() >= 1 && stockcontrol.getVariableBuffer() < 1)
                 analysis.setProposedDeletion(
-                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer())
-                                * (1 - scp.getVariableBuffer() * ratio)));
-            else if (scp.getStaticBuffer() >= 1 && scp.getVariableBuffer() >= 1)
+                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - stockcontrol.getStaticBuffer())
+                                * (1 - stockcontrol.getVariableBuffer() * ratio)));
+            else if (stockcontrol.getStaticBuffer() >= 1 && stockcontrol.getVariableBuffer() >= 1)
                 analysis.setProposedDeletion(
-                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer())
-                                - scp.getVariableBuffer() * ratio));
-            else if (scp.getStaticBuffer() < 1 && scp.getVariableBuffer() < 1)
+                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - stockcontrol.getStaticBuffer())
+                                - stockcontrol.getVariableBuffer() * ratio));
+            else if (stockcontrol.getStaticBuffer() < 1 && stockcontrol.getVariableBuffer() < 1)
                 analysis.setProposedDeletion(
-                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs())*(1-scp.getStaticBuffer())
-                                - scp.getVariableBuffer() * ratio));
+                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs())*(1-stockcontrol.getStaticBuffer())
+                                - stockcontrol.getVariableBuffer() * ratio));
 
             if (analysis.getProposedDeletion() < 0)
                 analysis.setProposedDeletion(0);
             if (analysis.getProposedDeletion() == 0 && ratio > 0.5)
                 analysis.setProposedPurchase((int) (-1 * analysis.getLastStock() * 0.001 * ratio));
         } else {
-            if (scp.getStaticBuffer() < 1)
+            if (stockcontrol.getStaticBuffer() < 1)
                 analysis.setProposedDeletion(
-                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1 - scp.getStaticBuffer())));
+                        (int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1 - stockcontrol.getStaticBuffer())));
             else
                 analysis.setProposedDeletion(
-                        (int) (analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer()));
+                        (int) (analysis.getLastStock() - analysis.getMaxLoansAbs() - stockcontrol.getStaticBuffer()));
         }
         if (events.size() > 0) {
             if (LocalDate.parse(events.get(0).getDate().substring(0, 10), dtf).isAfter(scpMiniumumDate))
@@ -238,19 +229,15 @@ public class AnalysisProcessor implements ItemProcessor<Manifestation,Eventanaly
         if (analysis.getLastStock() - analysis.getProposedDeletion() < 2 && analysis.getLastStock() >= 3)
             analysis.setComment("ggf. umstellen");
 
-        if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= scp
+        if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= stockcontrol
                 .getMinimumDaysOfRequest()) {
             analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
         }
         return analysis;
     }
 
-    public void setStockcontrol(String stockcontrol) {this.stockcontrol = stockcontrol; }
-
-    private String getObject(String url) throws IOException {
-        HttpClient client = new HttpClient();
-        GetMethod get = new GetMethod(url);
-        client.executeMethod(get);
-        return get.getResponseBodyAsString();
+    private ExpressionProcessor setStockcontrol(Stockcontrol stockcontrol) {
+        this.stockcontrol = stockcontrol;
+        return this;
     }
 }
