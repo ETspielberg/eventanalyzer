@@ -7,11 +7,10 @@ import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Value;
-import unidue.ub.media.monographs.Manifestation;
 
 import java.util.List;
 
-public class AnalysisWriter<Eventanalysis> implements ItemWriter {
+public class AnalysisWriter implements ItemWriter {
 
     @Value("${ub.statistics.data.url}")
     private String dataURL;

@@ -9,12 +9,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JobCompletionNotificationListener extends JobExecutionListenerSupport {
+public class JobExecutionListener extends JobExecutionListenerSupport {
 
-    private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
+    private static final Logger log = LoggerFactory.getLogger(JobExecutionListener.class);
 
     @Autowired
-    public JobCompletionNotificationListener() {
+    public JobExecutionListener() {
+    }
+
+    @Override
+    public void beforeJob(JobExecution jobExecution) {
+
     }
 
     @Override

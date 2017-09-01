@@ -1,14 +1,10 @@
 package unidue.ub.eventanalyzer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
-import unidue.ub.media.monographs.Expression;
-import unidue.ub.media.monographs.Item;
-import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.time.LocalDate;
@@ -23,7 +19,7 @@ import java.util.*;
  * @author Eike Spielberg
  * @version 1
  */
-public class EventAnalyzer {
+class EventAnalyzer {
 
 	private static final Logger LOGGER = Logger.getLogger(EventAnalyzer.class);
 	
