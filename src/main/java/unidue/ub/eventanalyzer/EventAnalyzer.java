@@ -4,6 +4,8 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.settings.fachref.Stockcontrol;
@@ -28,30 +30,31 @@ class EventAnalyzer {
 	private Eventanalysis analysis;
 
 	@Value("${ub.statistics.status.lbs}")
-	private  String lbs;
-
-	@Value("${ub.statistics.status.student}")
-	private String studentUser;
-
-	@Value("${ub.statistics.status.intern}")
-	private String internUser;
-
-	@Value("${ub.statistics.status.extern}")
-	private String externUser;
-
-	@Value("${ub.statistics.status.happ}")
-	private String happUser;
+	private String lbs;
 
 	@Value("${ub.statistics.status.lendable}")
 	private String lendable;
 
+	@Value("#{jobParameters['staticBuffer']}")
+	private long staticBuffer;
+
+	@Value("#{jobParameters['variableBuffer']}")
+	private long variableBuffer;
 
 	@Value("#{jobParameters['yearsToAverage']}")
-			private long yearsToAverage;
+	private long yearsToAverage;
 
 	@Value("#{jobParameters['identifier']}")
 	private String identifier;
 
+	@Value("#{jobParameters['minimumDaysOfRequest']}")
+	private long minimumDaysOfRequest;
+
+	@Value("#{jobParameters['minimumYears']}")
+	private long minimumYears;
+
+	@Value("#{jobParameters['yearsOfRequests']}")
+	private long yearsOfRequests;
 
 	/**
 	 * Calculates the loan and request parameters for a given List of Events
@@ -65,12 +68,25 @@ class EventAnalyzer {
 	 *            a string describing the list of Event-objects. For a single
 	 *            edition (referred to as document in this program), this is
 	 *            usually the docNumber.
-	 * @param scp
-	 *            a Stockcontrol-objects containing the main
-	 *            parameters for the calculation.
 	 */
 
 	EventAnalyzer(List<Event> events, String description) {
+
+		ResponseEntity<UserGroup> response = new RestTemplate().getForEntity(
+				settingsUrl + "/userGroup",
+				UserGroup.class
+		);
+		List<UserGroup> usergroups = response.getBody();
+
+		HashMap<String,String> usergroupsMap = new HashMap<>();
+		for (UserGroup usergroup : usergroups) {
+			String usercategoriesString = "";
+			List<UserCategory> usercategories = usergroup.getUserCategories();
+			for (UserCategory userCategory : usercategories) {
+				usercategoriesString += userCategory.getName();
+			}
+			usergroupsMap.put(usergroup.getName(),usercategoriesString);
+		}
 		LocalDate TODAY = LocalDate.now();
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	    Hashtable<Integer, Integer> allMaxLoansAbs = new Hashtable<>();
@@ -82,8 +98,8 @@ class EventAnalyzer {
 			analysis.setStockcontrolId(identifier);
 
 		LocalDate scpStartDate = TODAY.minus(yearsToAverage, ChronoUnit.YEARS);
-		LocalDate scpStartYearRequests = TODAY.minus((long) scp.getYearsOfRequests(), ChronoUnit.YEARS);
-		LocalDate scpMiniumumDate = TODAY.minus((long) scp.getMinimumYears(), ChronoUnit.YEARS);
+		LocalDate scpStartYearRequests = TODAY.minus((long) yearsOfRequests, ChronoUnit.YEARS);
+		LocalDate scpMiniumumDate = TODAY.minus((long) minimumYears, ChronoUnit.YEARS);
 		Collections.sort(events);
 
 		// prepare the timeline to evaluate the relative lent
@@ -206,34 +222,34 @@ class EventAnalyzer {
 
 		if (analysis.getMaxRelativeLoan() != 0) {
 			double ratio = analysis.getMeanRelativeLoan()/analysis.getMaxRelativeLoan();
-			if (scp.getStaticBuffer() < 1 && scp.getVariableBuffer() < 1)
+			if (staticBuffer < 1 && variableBuffer < 1)
 				analysis.setProposedDeletion((int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1
-						- scp.getStaticBuffer()
-						- scp.getVariableBuffer() *ratio)));
-			else if (scp.getStaticBuffer() >= 1 && scp.getVariableBuffer() < 1)
+						- staticBuffer
+						- variableBuffer *ratio)));
+			else if (staticBuffer >= 1 && variableBuffer < 1)
 				analysis.setProposedDeletion(
-						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer())
-								* (1 - scp.getVariableBuffer() * ratio)));
-			else if (scp.getStaticBuffer() >= 1 && scp.getVariableBuffer() >= 1)
+						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - staticBuffer)
+								* (1 - variableBuffer * ratio)));
+			else if (staticBuffer >= 1 && variableBuffer >= 1)
 				analysis.setProposedDeletion(
-						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer())
-							 - scp.getVariableBuffer() * ratio));
-			else if (scp.getStaticBuffer() < 1 && scp.getVariableBuffer() < 1)
+						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - staticBuffer)
+							 - variableBuffer * ratio));
+			else if (staticBuffer < 1 && variableBuffer < 1)
 				analysis.setProposedDeletion(
-						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs())*(1-scp.getStaticBuffer())
-							 - scp.getVariableBuffer() * ratio));
+						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs())*(1-staticBuffer)
+							 - variableBuffer * ratio));
 
 			if (analysis.getProposedDeletion() < 0)
 				analysis.setProposedDeletion(0);
 			if (analysis.getProposedDeletion() == 0 && ratio > 0.5)
 				analysis.setProposedPurchase((int) (-1 * analysis.getLastStock() * 0.001 * ratio));
 		} else {
-			if (scp.getStaticBuffer() < 1)
+			if (staticBuffer < 1)
 				analysis.setProposedDeletion(
-						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1 - scp.getStaticBuffer())));
+						(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1 - staticBuffer)));
 			else
 				analysis.setProposedDeletion(
-						(int) (analysis.getLastStock() - analysis.getMaxLoansAbs() - scp.getStaticBuffer()));
+						(int) (analysis.getLastStock() - analysis.getMaxLoansAbs() - staticBuffer));
 		}
 		if (events.size() > 0) {
 		if (LocalDate.parse(events.get(0).getDate().substring(0, 10), dtf).isAfter(scpMiniumumDate))
@@ -243,8 +259,7 @@ class EventAnalyzer {
 		if (analysis.getLastStock() - analysis.getProposedDeletion() < 2 && analysis.getLastStock() >= 3)
 			analysis.setComment("ggf. umstellen");
 
-		if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= scp
-				.getMinimumDaysOfRequest()) {
+		if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= minimumDaysOfRequest) {
 			analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
 		}
 
