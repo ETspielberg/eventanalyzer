@@ -2,6 +2,7 @@ package unidue.ub.eventanalyzer;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
@@ -19,6 +20,7 @@ import java.util.*;
  * @author Eike Spielberg
  * @version 1
  */
+@StepScope
 class EventAnalyzer {
 
 	private static final Logger LOGGER = Logger.getLogger(EventAnalyzer.class);
@@ -43,6 +45,14 @@ class EventAnalyzer {
 	@Value("${ub.statistics.status.lendable}")
 	private String lendable;
 
+
+	@Value("#{jobParameters['yearsToAverage']}")
+			private long yearsToAverage;
+
+	@Value("#{jobParameters['identifier']}")
+	private String identifier;
+
+
 	/**
 	 * Calculates the loan and request parameters for a given List of Events
 	 * with the parameters in the Stockcontrol. The results are stored
@@ -60,7 +70,7 @@ class EventAnalyzer {
 	 *            parameters for the calculation.
 	 */
 
-	EventAnalyzer(List<Event> events, String description, Stockcontrol scp) {
+	EventAnalyzer(List<Event> events, String description) {
 		LocalDate TODAY = LocalDate.now();
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	    Hashtable<Integer, Integer> allMaxLoansAbs = new Hashtable<>();
@@ -68,10 +78,10 @@ class EventAnalyzer {
 		analysis.setTitleId(description);
 		analysis.setDate(new Date());
 
-		if (scp.getIdentifier() != null)
-			analysis.setStockcontrolId(scp.getIdentifier());
+		if (identifier != null)
+			analysis.setStockcontrolId(identifier);
 
-		LocalDate scpStartDate = TODAY.minus((long) scp.getYearsToAverage(), ChronoUnit.YEARS);
+		LocalDate scpStartDate = TODAY.minus(yearsToAverage, ChronoUnit.YEARS);
 		LocalDate scpStartYearRequests = TODAY.minus((long) scp.getYearsOfRequests(), ChronoUnit.YEARS);
 		LocalDate scpMiniumumDate = TODAY.minus((long) scp.getMinimumYears(), ChronoUnit.YEARS);
 		Collections.sort(events);

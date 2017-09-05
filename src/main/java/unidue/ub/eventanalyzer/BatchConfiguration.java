@@ -49,6 +49,34 @@ public class BatchConfiguration {
     @Autowired
     public StepBuilderFactory stepBuilderFactory;
 
+    public boolean groupedAnalysis = false;
+
+@Bean
+@StepScope
+public JobParameters jobParameters(@Value("#{jobParameters['stockcontrol.identifer']}") String identifier){
+    JobParametersBuilder builder = new JobParametersBuilder();
+    builder.addString("stockcontrol", identifier);
+    ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
+            settingsUrl + "/stockcontrol/" + identifier ,
+            Stockcontrol.class
+    );
+    Stockcontrol stockcontrol = response.getBody();
+    builder.addString("collections", stockcontrol.getCollections());
+    builder.addString("materials", stockcontrol.getMaterials());
+    builder.addString("deletionMailBcc", stockcontrol.getDeletionMailBcc());
+    builder.addString("systemCode", stockcontrol.getSystemCode());
+    builder.addString("systemCode", stockcontrol.getSubjectID());
+    builder.addLong("yearsToAverage",(long) stockcontrol.getYearsToAverage());
+    builder.addDouble("blacklistExpire", stockcontrol.getBlacklistExpire());
+    builder.addLong("minimumDaysOfRequest",(long) stockcontrol.getMinimumDaysOfRequest());
+    builder.addLong("minimumYears",(long) stockcontrol.getMinimumYears());
+    builder.addDouble("staticBuffer", stockcontrol.getStaticBuffer());
+    builder.addDouble("variableBuffer", stockcontrol.getVariableBuffer());
+    builder.addLong("yearsOfRequests",(long) stockcontrol.getYearsOfRequests());
+    groupedAnalysis = stockcontrol.isGroupedAnalysis();
+    builder.addString("groupedAnalysis", String.valueOf(groupedAnalysis));
+    return builder.toJobParameters();
+}
 
     @Bean
     public RestTemplate notationTemplate() {
@@ -61,55 +89,38 @@ public class BatchConfiguration {
     }
 
     @Bean
-    @StepScope
-    public Stockcontrol stockcontrol(@Value("#{jobParameters['stockcontrol.identifer']}") String identifier) {
-        ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
-                settingsUrl + "/stockcontrol/" + identifier ,
-                Stockcontrol.class
-        );
-        Stockcontrol stockcontrol = response.getBody();
-        return stockcontrol;
-    }
-
-    @Bean
     public RestTemplate getterTemplate() {
         return new RestTemplate();
     }
 
     @Bean
     @StepScope
-    public ManifestationReader manifestationReader(@Value("#{jobParameters['identifer']}") String identifier) {
+    public ManifestationReader manifestationReader() {
         ManifestationReader reader = new ManifestationReader();
         reader.setNotationTemplate(notationTemplate())
-                .setRestTemplate(getterTemplate())
-                .setStockcontrol(stockcontrol(identifier));
+                .setRestTemplate(getterTemplate());
         return reader;
     }
 
     @Bean
     @StepScope
-    public ExpressionReader expressionReader(@Value("#{jobParameters['identifer']}") String identifier) {
+    public ExpressionReader expressionReader() {
         ExpressionReader reader = new ExpressionReader();
         reader.setNotationTemplate(notationTemplate())
-                .setRestTemplate(getterTemplate())
-                .setStockcontrol(stockcontrol(identifier));
+                .setRestTemplate(getterTemplate());
         return reader;
     }
 
     @Bean
     @StepScope
-    public ManifestationProcessor manifestationProcessor(@Value("#{jobParameters['identifer']}") String identifier) {
-        ManifestationProcessor processor = new ManifestationProcessor()
-                .setStockcontrol(stockcontrol(identifier));
-        return processor;
+    public ManifestationProcessor manifestationProcessor() {
+        return new ManifestationProcessor();
     }
 
     @Bean
     @StepScope
-    public ExpressionProcessor expressionProcessor(@Value("#{jobParameters['identifer']}") String identifier) {
-        ExpressionProcessor processor = new ExpressionProcessor()
-                .setStockcontrol(stockcontrol(identifier));
-        return processor;
+    public ExpressionProcessor expressionProcessor() {
+        return new ExpressionProcessor();
     }
 
     @Bean
@@ -119,30 +130,30 @@ public class BatchConfiguration {
 
     @Bean
     @StepScope
-    public Job eventanalyzerJob(JobExecutionListener listener, @Value("#{jobParameters['identifer']}") String identifier) {
+    public Job eventanalyzerJob(JobExecutionListener listener) {
         return jobBuilderFactory.get("eventanalyzerJob")
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .flow(step1(identifier))
+                .flow(step1())
                 .end()
                 .build();
     }
 
     @Bean
-    public Step step1(@Value("#{jobParameters['identifer']}") String identifier) {
+    public Step step1() {
         Step step;
-        if (stockcontrol(identifier).isGroupedAnalysis()) {
+        if (groupedAnalysis) {
             step = stepBuilderFactory.get("step1")
                     .<Expression, Eventanalysis>chunk(10)
-                    .reader(expressionReader(identifier))
-                    .processor(expressionProcessor(identifier))
+                    .reader(expressionReader())
+                    .processor(expressionProcessor())
                     .writer(writer())
                     .build();
         } else {
             step = stepBuilderFactory.get("step1")
                     .<Manifestation, Eventanalysis>chunk(10)
-                    .reader(manifestationReader(identifier))
-                    .processor(manifestationProcessor(identifier))
+                    .reader(manifestationReader())
+                    .processor(manifestationProcessor())
                     .writer(writer())
                     .build();
         }
