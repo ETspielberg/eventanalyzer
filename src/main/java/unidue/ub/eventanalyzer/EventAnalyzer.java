@@ -4,6 +4,10 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.client.Traverson;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
@@ -12,6 +16,8 @@ import unidue.ub.settings.fachref.ItemGroup;
 import unidue.ub.settings.fachref.Stockcontrol;
 import unidue.ub.settings.fachref.UserGroup;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -31,7 +37,7 @@ class EventAnalyzer {
 
 	EventAnalyzer() {}
 
-	private static final Logger LOGGER = Logger.getLogger(EventAnalyzer.class);
+	private static final Logger log = Logger.getLogger(EventAnalyzer.class);
 
 	@Value("${ub.statistics.settings.url}")
 	private static String settingsUrl;
@@ -56,7 +62,7 @@ class EventAnalyzer {
 	 * @param events a list of Event-objects.
 	 */
 
-	Eventanalysis analyze(List<Event> events, Stockcontrol stockcontrol) {
+	Eventanalysis analyze(List<Event> events, Stockcontrol stockcontrol) throws URISyntaxException {
 		Collections.sort(events);
 
 		//build new analysis and set some fields
@@ -129,7 +135,7 @@ class EventAnalyzer {
 				// analyze loan events
 				if (event.getType().equals("loan")) {
 					if (event.getBorrowerStatus() == null) {
-						LOGGER.info("no Borrower given");
+						log.info("no Borrower given");
 						usagecounter.daysLoaned +=days;
 					} else {
 						if (relevantUserCategories.contains(event.getBorrowerStatus()))
@@ -276,15 +282,16 @@ class EventAnalyzer {
 		}
 	}
 
-	private void prepareUserCategories() {
-		ResponseEntity<UserGroup[]> response = new RestTemplate().getForEntity(
-				settingsUrl + "/userCategory",
-				UserGroup[].class
-		);
+	private void prepareUserCategories() throws URISyntaxException {
+		Traverson traverson = new Traverson(new URI(settingsUrl + "/userGroup"), MediaTypes.HAL_JSON);
+		Traverson.TraversalBuilder tb = traverson.follow("$._links.profile.href");
+		ParameterizedTypeReference<Resources<UserGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<UserGroup>>() {};
+		Resources<UserGroup> resUsers = tb.toObject(typeRefDevices);
+		Collection<UserGroup> foundUserGroups = resUsers.getContent();
 		userGroups = new HashMap<>();
 		relevantUserCategories = "";
 		irrelevantUserCategories = "";
-		for (UserGroup userGroup : response.getBody()) {
+		for (UserGroup userGroup : foundUserGroups) {
 			userGroups.put(userGroup.getName(), userGroup.getUserCategoriesAsString());
 			if (userGroup.isRelevantForAnalysis())
 				relevantUserCategories += userGroup.getUserCategoriesAsString() + " ";

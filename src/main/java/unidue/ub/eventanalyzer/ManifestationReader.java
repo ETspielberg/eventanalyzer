@@ -98,7 +98,7 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                 if (notationGroupString.contains("-")) {
                     String startNotation = notationGroupString.substring(0, notationGroupString.indexOf("-"));
                     String endNotation = notationGroupString.substring(notationGroupString.indexOf("-") + 1, notationGroupString.length());
-                    Traverson traverson = new Traverson(new URI(settingsUrl + "/notation/search/etNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
+                    Traverson traverson = new Traverson(new URI(settingsUrl + "/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
                     Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
                     ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {};
                     Resources<Notation> resUsers = tb.toObject(typeRefDevices);
@@ -120,10 +120,16 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         for (Notation notation : notations) {
             log.info("collecting manifestations for notation " + notation.getNotation());
             ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
-                    getterURL + "/manifestations?identifier=" + notation.getNotation() + "&mode=notation",
+                    getterURL + "/getter/manifestations?identifier=" + notation.getNotation() + "&exact=&mode=notation",
                     Manifestation[].class
             );
-            manifestationData.addAll(Arrays.asList(manifestations.getBody()));
+            for (Manifestation manifestation : manifestations.getBody()) {
+                ResponseEntity<Manifestation> fullManifestation = restTemplate.getForEntity(
+                        getterURL + "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
+                        Manifestation.class
+                );
+                manifestationData.add(fullManifestation.getBody());
+            }
         }
     }
 
