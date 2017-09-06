@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Item;
+import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +18,17 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
 
     private static final Logger log = LoggerFactory.getLogger(ExpressionProcessor.class);
 
-    @Value("#{jobParameters['collections']}")
+    private Stockcontrol stockcontrol;
+
+    //@Value("#{jobParameters['collections']}")
     private String collections;
 
-    @Value("#{jobParameters['materials']}")
+    //@Value("#{jobParameters['materials']}")
     private String materials;
+
+    ExpressionProcessor(Stockcontrol stockcontrol) {
+        this.stockcontrol = stockcontrol;
+    }
 
     @Override
     public Eventanalysis process(final Expression expression) throws Exception {
@@ -35,7 +41,8 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
                 events.addAll(item.getEvents());
         }
 
-        EventAnalyzer analyzer = new EventAnalyzer(events,expression.getShelfmarkBase());
-        return analyzer.getEventanalysis();
+        Eventanalysis analysis = new EventAnalyzer().analyze(events,stockcontrol);
+        analysis.setTitleId(expression.getShelfmarkBase());
+        return analysis;
     }
 }

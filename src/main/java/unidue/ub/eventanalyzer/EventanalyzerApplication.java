@@ -1,13 +1,12 @@
 package unidue.ub.eventanalyzer;
 
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.settings.fachref.Stockcontrol;
@@ -15,31 +14,25 @@ import unidue.ub.settings.fachref.Stockcontrol;
 @SpringBootApplication
 public class EventanalyzerApplication {
 
-	@Value("${ub.statistics.settings.url}")
-	private static String settingsUrl;
+	private final static Logger log = LoggerFactory.getLogger(EventanalyzerApplication.class);
+
+	private static String identifier;
 
 	public static void main(String[] args) {
+		identifier = "";
+		if (args.length > 0) {
+			identifier = args[0];
+		}
+		SpringApplication.run(EventanalyzerApplication.class, args);
+	}
 
-		JobParametersBuilder builder = new JobParametersBuilder();
-		builder.addString("stockcontrol", args[0]);
+	@Bean
+	public static Stockcontrol stockcontrol() {
+
 		ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
-				settingsUrl + "/stockcontrol/" + args[0] ,
+				"http://localhost:11300/stockcontrol/" + identifier ,
 				Stockcontrol.class
 		);
-		Stockcontrol stockcontrol = response.getBody();
-		builder.addString("collections", stockcontrol.getCollections());
-		builder.addString("materials", stockcontrol.getMaterials());
-		builder.addString("deletionMailBcc", stockcontrol.getDeletionMailBcc());
-		builder.addString("systemCode", stockcontrol.getSystemCode());
-		builder.addString("systemCode", stockcontrol.getSubjectID());
-		builder.addLong("yearsToAverage",(long) stockcontrol.getYearsToAverage());
-		builder.addDouble("blacklistExpire", stockcontrol.getBlacklistExpire());
-		builder.addLong("minimumDaysOfRequest",(long) stockcontrol.getMinimumDaysOfRequest());
-		builder.addLong("minimumYears",(long) stockcontrol.getMinimumYears());
-		builder.addDouble("staticBuffer", stockcontrol.getStaticBuffer());
-		builder.addDouble("variableBuffer", stockcontrol.getVariableBuffer());
-		builder.addLong("yearsOfRequests",(long) stockcontrol.getYearsOfRequests());
-
-		SpringApplication.run(EventanalyzerApplication.class, args);
+		return response.getBody();
 	}
 }

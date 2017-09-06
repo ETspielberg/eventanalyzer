@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  * @author Frank L\u00FCtzenkirchen
  * @version 1
  */
-public class ItemFilter {
+class ItemFilter {
 
 	private Pattern collectionPattern = Pattern.compile("...");
 
@@ -30,7 +30,7 @@ public class ItemFilter {
 	 * 
 	 */
 
-	public ItemFilter(String collections, String materials) {
+	ItemFilter(String collections, String materials) {
 		this.materials = materials == null ? "" : materials.trim();
 
 		if (!collections.isEmpty()) {
@@ -49,7 +49,7 @@ public class ItemFilter {
 	 *            an item to be tested
 	 * @return boolean true, if item matches filter
 	 */
-	public boolean matches(Item item) {
+	boolean matches(Item item) {
 		return materialMatches(item.getMaterial()) && collectionMatches(item.getCollection());
 	}
 

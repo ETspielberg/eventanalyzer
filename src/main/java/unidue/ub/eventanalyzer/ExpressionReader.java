@@ -13,103 +13,42 @@ import java.util.*;
 
 public class ExpressionReader implements ItemReader<Expression> {
 
-    private RestTemplate restTemplate;
+    private boolean noExpressionsFound;
 
-    private RestTemplate notationTemplate;
+    private Enumeration<Expression> expressionEnumeration;
 
     private Stockcontrol stockcontrol;
 
-    private int nextExpressionIndex = 0;
-
-    private Hashtable<String,Expression> expressionData;
-
-    @Value("${ub.statistics.settings.url}")
-    private String settingsUrl;
-
-    @Value("${ub.statistics.getter.url}")
-    private String getterURL;
-
-    ExpressionReader(Stockcontrol stockcontrol, RestTemplate restTemplate) {
-        this.stockcontrol = stockcontrol;
-        this.restTemplate = restTemplate;
-        nextExpressionIndex = 0;
-    }
-
-    ExpressionReader() {
-        nextExpressionIndex = 0;
-    }
-
-    public ExpressionReader setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-        return this;
-    }
-
-    public ExpressionReader setNotationTemplate(RestTemplate notationTemplate) {
-        this.notationTemplate = notationTemplate;
-        return this;
-    }
-
-    public ExpressionReader setStockcontrol(Stockcontrol stockcontrol) {
-        this.stockcontrol = stockcontrol;
-        return this;
-    }
+    ExpressionReader(Stockcontrol stockcontrol) { noExpressionsFound = true;
+    this.stockcontrol = stockcontrol;}
 
     @Override
     public Expression read() throws Exception {
-        if (noExpressionsFound()) {
+        if (noExpressionsFound) {
             collectManifestation();
         }
-        Expression nextExpression = null;
-        if (nextExpressionIndex < expressionData.size()) {
-
-            nextExpression = expressionData.get(nextExpressionIndex);
-            nextExpressionIndex++;
-        }
-        return nextExpression;
+        if (expressionEnumeration.hasMoreElements())
+            return expressionEnumeration.nextElement();
+        else return null;
     }
 
     private void collectManifestation() {
-        List<Notation> notations = new ArrayList<>();
-        String[] notationGroupStrings;
-        if (stockcontrol.getSystemCode().contains(",")) {
-            notationGroupStrings = stockcontrol.getSystemCode().split(",");
-        } else {
-            notationGroupStrings = new String[] {stockcontrol.getSystemCode()};
-        }
-        for (String notationGroupString : notationGroupStrings) {
-            if (notationGroupString.contains("-")) {
-                String startNotation = notationGroupString.substring(0,notationGroupString.indexOf("-"));
-                String endNotation = notationGroupString.substring(notationGroupString.indexOf("-") + 1, notationGroupString.length());
-                ResponseEntity<Notation[]> response = notationTemplate.getForEntity(
-                        settingsUrl + "/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation,
-                        Notation[].class
-                );
-                notations.addAll(Arrays.asList(response.getBody()));
-            } else {
-                ResponseEntity<Notation[]> response = notationTemplate.getForEntity(
-                        settingsUrl + "/notation/search/getNotationListForNotationgroup?notationGroupName=" + notationGroupString,
-                        Notation[].class
-                );
-                notations.addAll(Arrays.asList(response.getBody()));
-            }
-        }
-        expressionData = new Hashtable<>();
-        for (Notation notation : notations) {
-            ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
-                    getterURL + "/manifestations?identifier=" + notation.getNotation() + "&mode=notation",
-                    Manifestation[].class
-            );
-            for (Manifestation manifestation : manifestations.getBody()){
+        Hashtable<String,Expression> expressionData = new Hashtable<>();
+        ManifestationReader manifestationReader = new ManifestationReader(stockcontrol);
+        List<Manifestation> manifestations  = manifestationReader.getManifestations();
+        if(manifestations.size() == 0)
+            return;
+        else {
+            for (Manifestation manifestation : manifestations) {
                 if (expressionData.contains(manifestation.getShelfmarkBase())) {
                     expressionData.get(manifestation.getShelfmarkBase()).addDocument(manifestation);
                 } else {
                     Expression expression = new Expression(manifestation.getShelfmarkBase());
-                    expressionData.put(expression.getShelfmarkBase(),expression);                }
+                    expressionData.put(expression.getShelfmarkBase(), expression);
+                }
             }
+            expressionEnumeration = expressionData.elements();
+            noExpressionsFound = false;
         }
-    }
-
-    private boolean noExpressionsFound() {
-        return (this.expressionData == null);
     }
 }
