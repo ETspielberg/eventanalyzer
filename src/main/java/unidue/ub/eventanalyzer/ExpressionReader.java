@@ -9,6 +9,7 @@ import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class ExpressionReader implements ItemReader<Expression> {
@@ -18,6 +19,10 @@ public class ExpressionReader implements ItemReader<Expression> {
     private Enumeration<Expression> expressionEnumeration;
 
     private Stockcontrol stockcontrol;
+
+    private RestTemplate restTemplate;
+
+    private RestTemplate notationTemplate;
 
     ExpressionReader(Stockcontrol stockcontrol) { noExpressionsFound = true;
     this.stockcontrol = stockcontrol;}
@@ -32,9 +37,12 @@ public class ExpressionReader implements ItemReader<Expression> {
         else return null;
     }
 
-    private void collectManifestation() {
+    private void collectManifestation() throws URISyntaxException {
         Hashtable<String,Expression> expressionData = new Hashtable<>();
         ManifestationReader manifestationReader = new ManifestationReader(stockcontrol);
+        manifestationReader.collectManifestation();
+        manifestationReader.setRestTemplate(restTemplate);
+        manifestationReader.setNotationTemplate(notationTemplate);
         List<Manifestation> manifestations  = manifestationReader.getManifestations();
         if(manifestations.size() == 0)
             return;
@@ -50,5 +58,15 @@ public class ExpressionReader implements ItemReader<Expression> {
             expressionEnumeration = expressionData.elements();
             noExpressionsFound = false;
         }
+    }
+
+    public ExpressionReader setRestTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+        return this;
+    }
+
+    public ExpressionReader setNotationTemplate(RestTemplate notationTemplate) {
+        this.notationTemplate = notationTemplate;
+        return this;
     }
 }

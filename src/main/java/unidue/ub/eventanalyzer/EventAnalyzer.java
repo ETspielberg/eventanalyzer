@@ -2,14 +2,10 @@ package unidue.ub.eventanalyzer;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;
-import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.client.Traverson;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.settings.fachref.ItemGroup;
@@ -32,15 +28,15 @@ import java.util.*;
  * @author Eike Spielberg
  * @version 1
  */
-@StepScope
-class EventAnalyzer {
+public class EventAnalyzer {
 
-	EventAnalyzer() {}
+	EventAnalyzer(String settingsUrl) {
+		this.settingsUrl = settingsUrl;
+	}
 
 	private static final Logger log = Logger.getLogger(EventAnalyzer.class);
 
-	@Value("${ub.statistics.settings.url}")
-	private static String settingsUrl;
+	private String settingsUrl;
 
 	private String relevantUserCategories;
 
@@ -71,6 +67,7 @@ class EventAnalyzer {
 		if (stockcontrol.getIdentifier() != null)
 			analysis.setStockcontrolId(stockcontrol.getIdentifier());
 
+		usagecounter = new UsageCounters();
 		//start analysis
 		if (!events.isEmpty()) {
 			prepareUserCategories();
@@ -85,29 +82,27 @@ class EventAnalyzer {
 			LocalDate scpMiniumumDate = TODAY.minus(stockcontrol.getMinimumYears(), ChronoUnit.YEARS);
 			Collections.sort(events);
 
-			usagecounter = new UsageCounters();
-
-			Integer yearsBefore = TODAY.getYear() - LocalDate.parse(events.get(0).getDate(), dtf).getYear();
+			Integer yearsBefore = TODAY.getYear() - Integer.parseInt(events.get(0).getDate().substring(0,4));
 			for (int year = 0; year <= yearsBefore; year++) {
 				allMaxLoansAbs.put(year, 0L);
 			}
 			UsageCounters oldUsagecounter = usagecounter.clone();
 			for (Event event : events) {
 				LocalDate eventDate = LocalDate.parse(event.getDate().substring(0, 10), dtf);
-				if (!eventDate.isAfter(TODAY))
+				if (eventDate.isAfter(TODAY))
 					continue;
 
 				updateItemCounter(event);
 				int timeIntervall = TODAY.getYear() - eventDate.getYear();
-				long loans = usagecounter.getAllLoans();
+				long loans = usagecounter.getCorrectedLoans();
 				for (int i = timeIntervall; i <= yearsBefore; i++) {
 					long maxLoans = Math.max(allMaxLoansAbs.get(i), loans);
 					allMaxLoansAbs.replace(i, maxLoans);
 				}
 				if (eventDate.isAfter(scpStartDate)) {
-					loans = Math.max(loans, oldUsagecounter.getAllLoans());
+					loans = Math.max(loans, oldUsagecounter.getCorrectedLoans());
 					analysis.setMaxLoansAbs(Math.max(loans, analysis.getMaxLoansAbs()));
-					double relativeLoan = usagecounter.getRelativeLoan();
+					double relativeLoan = usagecounter.getCorrectedRelativLoan();
 					analysis.setMaxRelativeLoan(Math.max(relativeLoan, analysis.getMaxRelativeLoan()));
 				} else
 					oldUsagecounter = usagecounter.clone();
@@ -174,26 +169,29 @@ class EventAnalyzer {
 			double variableBuffer = stockcontrol.getVariableBuffer();
 
 			if (analysis.getMaxRelativeLoan() != 0) {
+				int proposedDeletion = 0;
 				double ratio = analysis.getMeanRelativeLoan() / analysis.getMaxRelativeLoan();
 				if (staticBuffer < 1 && variableBuffer < 1)
-					analysis.setProposedDeletion((int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1
+					proposedDeletion = ((int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1
 							- staticBuffer
 							- variableBuffer * ratio)));
 				else if (staticBuffer >= 1 && variableBuffer < 1)
-					analysis.setProposedDeletion(
+					proposedDeletion = (
 							(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - staticBuffer)
 									* (1 - variableBuffer * ratio)));
 				else if (staticBuffer >= 1 && variableBuffer >= 1)
-					analysis.setProposedDeletion(
+					proposedDeletion = (
 							(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs() - staticBuffer)
 									- variableBuffer * ratio));
 				else if (staticBuffer < 1 && variableBuffer < 1)
-					analysis.setProposedDeletion(
+					proposedDeletion = (
 							(int) ((analysis.getLastStock() - analysis.getMaxLoansAbs()) * (1 - staticBuffer)
 									- variableBuffer * ratio));
 
-				if (analysis.getProposedDeletion() < 0)
+				if (proposedDeletion < 0)
 					analysis.setProposedDeletion(0);
+				else
+					analysis.setProposedDeletion(proposedDeletion);
 				if (analysis.getProposedDeletion() == 0 && ratio > 0.5)
 					analysis.setProposedPurchase((int) (-1 * analysis.getLastStock() * 0.001 * ratio));
 			} else {
@@ -216,8 +214,9 @@ class EventAnalyzer {
 				analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
 			}
 			analysis.setLastStock(usagecounter.getStockLendable());
+			analysis.setStatus("finished");
 		} else {
-			analysis.setComment("no events found");
+			analysis.setStatus("noEvents");
 		}
 		return analysis;
 	}
@@ -234,46 +233,54 @@ class EventAnalyzer {
 	}
 
 	private void updateItemCounter(Event event) {
-		if (event.getType().equals("loan") && event.getBorrowerStatus() != null) {
-			if (userGroups.get("student").contains(event.getBorrowerStatus()))
-				usagecounter.studentLoans++;
-			else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
-				usagecounter.externLoans++;
-			else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
-				usagecounter.internLoans++;
-			else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
-				usagecounter.happLoans++;
-			else
+		if (event.getType().equals("loan")) {
+			if (event.getBorrowerStatus() != null) {
+				if (userGroups.get("student").contains(event.getBorrowerStatus()))
+					usagecounter.studentLoans++;
+				else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
+					usagecounter.externLoans++;
+				else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
+					usagecounter.internLoans++;
+				else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
+					usagecounter.happLoans++;
+				else
+					usagecounter.elseLoans++;
+			} else
 				usagecounter.elseLoans++;
-		} else if (event.getType().equals("return") && event.getBorrowerStatus() != null) {
-			if (userGroups.get("student").contains(event.getBorrowerStatus()))
-				usagecounter.studentLoans--;
-			else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
-				usagecounter.externLoans--;
-			else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
-				usagecounter.internLoans--;
-			else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
-				usagecounter.happLoans--;
-			else
+		} else if (event.getType().equals("return")) {
+			if (event.getBorrowerStatus() != null) {
+				if (userGroups.get("student").contains(event.getBorrowerStatus()))
+					usagecounter.studentLoans--;
+				else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
+					usagecounter.externLoans--;
+				else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
+					usagecounter.internLoans--;
+				else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
+					usagecounter.happLoans--;
+				else
+					usagecounter.elseLoans--;
+			} else
 				usagecounter.elseLoans--;
-		} else if (event.getType().equals("inventory") && event.getItem() != null) {
-			usagecounter.stock++;
-			if (event.getItem().getItemStatus() != null) {
-				if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
-					usagecounter.stockLendable++;
+		} else if (event.getType().equals("inventory")) {
+			if (event.getItem() != null) {
+				usagecounter.stock++;
+				if (event.getItem().getItemStatus() != null) {
+					if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
+						usagecounter.stockLendable++;
+				} else
+					usagecounter.stock++;
+			} else {
+				usagecounter.stock++;
 			}
-			if (itemGroups.get("lbs").contains(event.getItem().getCollection())) {
-				usagecounter.stockLBS++;
-			}
-		} else if (event.getType().equals("deletion") && event.getItem() != null) {
-			usagecounter.stock--;
-			if (event.getItem().getItemStatus() != null) {
-				if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
-					usagecounter.stockLendable--;
-			}
-			if (itemGroups.get("lbs").contains(event.getItem().getCollection())) {
-				usagecounter.stockLBS--;
-			}
+		} else if (event.getType().equals("deletion")) {
+			if (event.getItem() != null) {
+				usagecounter.stock--;
+				if (event.getItem().getItemStatus() != null) {
+					if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
+						usagecounter.stockLendable--;
+				} else
+					usagecounter.stock--;
+			} else usagecounter.stock--;
 			usagecounter.stockDeleted++;
 		} else if (event.getType().equals("request")) {
 			usagecounter.requests++;
@@ -283,15 +290,14 @@ class EventAnalyzer {
 	}
 
 	private void prepareUserCategories() throws URISyntaxException {
-		Traverson traverson = new Traverson(new URI(settingsUrl + "/userGroup"), MediaTypes.HAL_JSON);
-		Traverson.TraversalBuilder tb = traverson.follow("$._links.profile.href");
-		ParameterizedTypeReference<Resources<UserGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<UserGroup>>() {};
-		Resources<UserGroup> resUsers = tb.toObject(typeRefDevices);
-		Collection<UserGroup> foundUserGroups = resUsers.getContent();
-		userGroups = new HashMap<>();
 		relevantUserCategories = "";
 		irrelevantUserCategories = "";
-		for (UserGroup userGroup : foundUserGroups) {
+		Traverson traverson = new Traverson(new URI(settingsUrl + "/userGroup"), MediaTypes.HAL_JSON);
+		Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
+		ParameterizedTypeReference<Resources<UserGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<UserGroup>>() {};
+		Resources<UserGroup> resUsers = tb.toObject(typeRefDevices);
+		userGroups = new HashMap<>();
+		for (UserGroup userGroup : resUsers.getContent()) {
 			userGroups.put(userGroup.getName(), userGroup.getUserCategoriesAsString());
 			if (userGroup.isRelevantForAnalysis())
 				relevantUserCategories += userGroup.getUserCategoriesAsString() + " ";
@@ -300,18 +306,17 @@ class EventAnalyzer {
 		}
 	}
 
-	private void prepareItemCategories() {
-		ResponseEntity<ItemGroup[]> response = new RestTemplate().getForEntity(
-				settingsUrl + "/userCategory",
-				ItemGroup[].class
-		);
-		itemGroups = new HashMap<>();
+	private void prepareItemCategories() throws URISyntaxException {
 		relevantItemCategories = "";
-		for (ItemGroup itemGroup : response.getBody()) {
-			userGroups.put(itemGroup.getName(), itemGroup.getItemCategoriesAsString());
+		itemGroups = new HashMap<>();
+		Traverson traverson = new Traverson(new URI(settingsUrl + "/itemGroup"), MediaTypes.HAL_JSON);
+		Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
+		ParameterizedTypeReference<Resources<ItemGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<ItemGroup>>() {};
+		Resources<ItemGroup> resItems = tb.toObject(typeRefDevices);
+		for (ItemGroup itemGroup : resItems.getContent()) {
+			itemGroups.put(itemGroup.getName(), itemGroup.getItemCategoriesAsString());
 			if (itemGroup.isRelevantForAnalysis())
 				relevantItemCategories += itemGroup.getItemCategoriesAsString() + " ";
-
 		}
 	}
 }

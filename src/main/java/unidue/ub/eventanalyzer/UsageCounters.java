@@ -414,9 +414,17 @@ public class UsageCounters implements Cloneable  {
 		return allLoans;
 	}
 
+	public long getCorrectedLoans() {
+		return studentLoans + internLoans + externLoans + elseLoans;
+	}
+
 	public double getRelativeLoan() {
+		return getAllLoans() / stock;
+	}
+
+	public double getCorrectedRelativLoan() {
 		if (getReducedStock() > 0)
-		return getAllLoans() / getReducedStock();
+			return (studentLoans + internLoans + externLoans + elseLoans) / getReducedStock();
 		else return 0;
 	}
 

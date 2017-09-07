@@ -19,9 +19,6 @@ import unidue.ub.media.monographs.Manifestation;
 @EnableBatchProcessing
 public class BatchConfiguration {
 
-    @Value("${ub.statistics.settings.url}")
-    private String settingsUrl;
-
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
 
@@ -53,7 +50,11 @@ public class BatchConfiguration {
 
     @Bean
     public ExpressionReader expressionReader() {
-        return new ExpressionReader(EventanalyzerApplication.stockcontrol());
+        ExpressionReader reader =  new ExpressionReader(EventanalyzerApplication.stockcontrol());
+        reader.setRestTemplate(getterTemplate())
+                .setNotationTemplate(notationTemplate());
+        return reader;
+
     }
 
     @Bean

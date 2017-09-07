@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resources;
@@ -19,19 +18,16 @@ import unidue.ub.settings.fachref.Stockcontrol;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-
-@Scope("Step")
 public class ManifestationReader implements ItemReader<Manifestation> {
 
     private RestTemplate restTemplate;
 
-    private static final Logger log = LoggerFactory.getLogger(ManifestationReader.class);
-
     private RestTemplate notationTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(ManifestationReader.class);
 
     private int nextManifestationIndex = 0;
 
@@ -74,8 +70,8 @@ public class ManifestationReader implements ItemReader<Manifestation> {
     }
 
 
-    private void collectManifestation() throws URISyntaxException {
-        List<Notation> notations = new ArrayList<>();
+    public void collectManifestation() throws URISyntaxException {
+        List<String> notations = new ArrayList<>();
         String[] notationGroupStrings;
         if (stockcontrol.getSystemCode().isEmpty()) {
             Traverson traverson = new Traverson(new URI(settingsUrl + "/notation/search/getNotationListForNotationgroup?notationgroupName=" + stockcontrol.getSubjectID()), MediaTypes.HAL_JSON);
@@ -84,7 +80,7 @@ public class ManifestationReader implements ItemReader<Manifestation> {
             Resources<Notation> resUsers = tb.toObject(typeRefDevices);
             Collection<Notation> foundNotations = resUsers.getContent();
             for (Notation notationFound : foundNotations) {
-                notations.add(notationFound);
+                notations.add(notationFound.getNotation());
                 log.info("found notation " + notationFound.getNotation());
             }
 
@@ -104,23 +100,19 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                     Resources<Notation> resUsers = tb.toObject(typeRefDevices);
                     Collection<Notation> foundNotations = resUsers.getContent();
                     for (Notation notationFound : foundNotations) {
-                        notations.add(notationFound);
+                        notations.add(notationFound.getNotation());
                         log.info("found notation " + notationFound.getNotation());
                     }
                 } else {
-                    ResponseEntity<Notation> response = notationTemplate.getForEntity(
-                            settingsUrl + "/notation/" + notationGroupString,
-                            Notation.class
-                    );
-                    notations.add(response.getBody());
+                    notations.add(notationGroupString);
                 }
             }
         }
         manifestationData = new ArrayList<>();
-        for (Notation notation : notations) {
-            log.info("collecting manifestations for notation " + notation.getNotation());
+        for (String notation : notations) {
+            log.info("collecting manifestations for notation " + notation);
             ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
-                    getterURL + "/getter/manifestations?identifier=" + notation.getNotation() + "&exact=&mode=notation",
+                    getterURL + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
             for (Manifestation manifestation : manifestations.getBody()) {
@@ -132,6 +124,8 @@ public class ManifestationReader implements ItemReader<Manifestation> {
             }
         }
     }
+
+
 
     private boolean noManifestationsFound() {
         return (this.manifestationData == null);

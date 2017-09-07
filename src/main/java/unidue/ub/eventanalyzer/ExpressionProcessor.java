@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Expression;
@@ -20,11 +21,8 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
 
     private Stockcontrol stockcontrol;
 
-    //@Value("#{jobParameters['collections']}")
-    private String collections;
-
-    //@Value("#{jobParameters['materials']}")
-    private String materials;
+    @Value("${ub.statistics.settings.url}")
+    private String settingsUrl;
 
     ExpressionProcessor(Stockcontrol stockcontrol) {
         this.stockcontrol = stockcontrol;
@@ -35,13 +33,13 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
         log.info("analyzing manifestation " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
 
         List<Event> events = new ArrayList<>();
-        ItemFilter itemFilter = new ItemFilter(collections,materials);
+        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
         for (Item item : expression.getItems()) {
             if (itemFilter.matches(item))
                 events.addAll(item.getEvents());
         }
 
-        Eventanalysis analysis = new EventAnalyzer().analyze(events,stockcontrol);
+        Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events,stockcontrol);
         analysis.setTitleId(expression.getShelfmarkBase());
         return analysis;
     }

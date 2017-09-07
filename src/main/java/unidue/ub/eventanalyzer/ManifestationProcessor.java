@@ -3,6 +3,7 @@ package unidue.ub.eventanalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Item;
@@ -17,6 +18,9 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
 
     private Stockcontrol stockcontrol;
 
+    @Value("${ub.statistics.settings.url}")
+    private String settingsUrl;
+
     ManifestationProcessor(Stockcontrol stockcontrol) {
         this.stockcontrol = stockcontrol;
     }
@@ -28,11 +32,19 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
         List<Event> events = new ArrayList<>();
         ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
         for (Item item : manifestation.getItems()) {
-            if (itemFilter.matches(item))
-                events.addAll(item.getEvents());
+            if (itemFilter.matches(item)) {
+                List<Event> itemEvents = item.getEvents();
+                for (Event event : itemEvents) {
+                    events.add(event);
+                    if (event.getEndEvent() != null)
+                        events.add(event.getEndEvent());
+                }
+            }
         }
-        Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
+        Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events, stockcontrol);
         analysis.setTitleId(manifestation.getTitleID());
+        analysis.setShelfmark(manifestation.getShelfmark());
+        analysis.setShelfmarkBase(manifestation.getShelfmarkBase());
         return analysis;
     }
 }
