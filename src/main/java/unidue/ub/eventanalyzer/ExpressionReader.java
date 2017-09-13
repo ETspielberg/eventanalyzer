@@ -24,8 +24,16 @@ public class ExpressionReader implements ItemReader<Expression> {
 
     private RestTemplate notationTemplate;
 
+    private ManifestationReader manifestationReader;
+
     ExpressionReader(Stockcontrol stockcontrol) { noExpressionsFound = true;
     this.stockcontrol = stockcontrol;}
+
+    ExpressionReader(Stockcontrol stockcontrol, ManifestationReader manifestationReader) {
+        noExpressionsFound = true;
+        this.stockcontrol = stockcontrol;
+        this.manifestationReader = manifestationReader;
+    }
 
     @Override
     public Expression read() throws Exception {
@@ -39,16 +47,13 @@ public class ExpressionReader implements ItemReader<Expression> {
 
     private void collectManifestation() throws URISyntaxException {
         Hashtable<String,Expression> expressionData = new Hashtable<>();
-        ManifestationReader manifestationReader = new ManifestationReader(stockcontrol);
         manifestationReader.collectManifestation();
-        manifestationReader.setRestTemplate(restTemplate);
-        manifestationReader.setNotationTemplate(notationTemplate);
         List<Manifestation> manifestations  = manifestationReader.getManifestations();
         if(manifestations.size() == 0)
             return;
         else {
             for (Manifestation manifestation : manifestations) {
-                if (expressionData.contains(manifestation.getShelfmarkBase())) {
+                if (expressionData.containsKey(manifestation.getShelfmarkBase())) {
                     expressionData.get(manifestation.getShelfmarkBase()).addDocument(manifestation);
                 } else {
                     Expression expression = new Expression(manifestation.getShelfmarkBase());

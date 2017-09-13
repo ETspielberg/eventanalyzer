@@ -40,19 +40,28 @@ public class BatchConfiguration {
         return new RestTemplate();
     }
 
+    @Value("${ub.statistics.settings.url}")
+    private String settingsUrl;
+
+    @Value("${ub.statistics.getter.url}")
+    private String gettersUrl;
+
+    @Value("${ub.statistics.data.url}")
+    private String dataUrl;
+
     @Bean
     public ManifestationReader manifestationReader() {
         ManifestationReader reader = new ManifestationReader(EventanalyzerApplication.stockcontrol());
         reader.setNotationTemplate(notationTemplate())
-                .setRestTemplate(getterTemplate());
+                .setRestTemplate(getterTemplate())
+                .setGetterUrl(gettersUrl)
+                .setSettingsUrl(settingsUrl);
         return reader;
     }
 
     @Bean
     public ExpressionReader expressionReader() {
-        ExpressionReader reader =  new ExpressionReader(EventanalyzerApplication.stockcontrol());
-        reader.setRestTemplate(getterTemplate())
-                .setNotationTemplate(notationTemplate());
+        ExpressionReader reader =  new ExpressionReader(EventanalyzerApplication.stockcontrol(),manifestationReader());
         return reader;
 
     }
@@ -69,7 +78,9 @@ public class BatchConfiguration {
 
     @Bean
     public AnalysisWriter writer() {
-        return new AnalysisWriter();
+        AnalysisWriter writer =  new AnalysisWriter();
+        writer.setDataUrl(dataUrl);
+        return writer;
     }
 
     @Bean

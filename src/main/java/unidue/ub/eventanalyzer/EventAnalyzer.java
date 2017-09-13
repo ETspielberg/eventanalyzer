@@ -87,8 +87,13 @@ public class EventAnalyzer {
 				allMaxLoansAbs.put(year, 0L);
 			}
 			UsageCounters oldUsagecounter = usagecounter.clone();
+			LocalDate eventDate;
 			for (Event event : events) {
-				LocalDate eventDate = LocalDate.parse(event.getDate().substring(0, 10), dtf);
+				try {
+					eventDate = LocalDate.parse(event.getDate().substring(0, 10), dtf);
+				} catch (Exception e) {
+					continue;
+				}
 				if (eventDate.isAfter(TODAY))
 					continue;
 
@@ -118,7 +123,11 @@ public class EventAnalyzer {
 				Event endEvent = event.getEndEvent();
 				LocalDate endDate;
 				if (endEvent != null)
-					endDate = LocalDate.parse(endEvent.getDate().substring(0, 10), dtf);
+					try {
+						endDate = LocalDate.parse(endEvent.getDate().substring(0, 10), dtf);
+					} catch (Exception e ) {
+					endDate = TODAY;
+					}
 				else
 					endDate = TODAY;
 				if (endDate.isBefore(scpStartDate))
@@ -159,6 +168,7 @@ public class EventAnalyzer {
 						usagecounter.daysRequested += days;
 					}
 				}
+				log.info(usagecounter.toString());
 			}
 			double slope = calculateSlope(allMaxLoansAbs,yearsBefore);
 			analysis.setSlope(slope);
@@ -214,7 +224,7 @@ public class EventAnalyzer {
 				analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
 			}
 			analysis.setLastStock(usagecounter.getStockLendable());
-			analysis.setStatus("finished");
+			analysis.setStatus("proposed");
 		} else {
 			analysis.setStatus("noEvents");
 		}

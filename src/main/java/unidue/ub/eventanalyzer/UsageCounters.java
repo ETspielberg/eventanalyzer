@@ -460,7 +460,14 @@ public class UsageCounters implements Cloneable  {
 		clone.daysStockLendable = daysStockLendable;
 		clone.daysRequested = daysRequested;
 		return clone;
+	}
 
+	@Override
+	public String toString() {
+		String data = studentLoans + "; " + internLoans + "; " + externLoans + "; " + happLoans + "; " + elseLoans  + "; " +
+				stock + "; " + stockLBS  + "; " + stockLendable + "; " + stockNonLendable + "; " + stockDeleted + "; " +
+				requests + "; " +daysLoaned + "; " +daysStockLendable + "; " +daysRequested;
+		return data;
 	}
 
 }

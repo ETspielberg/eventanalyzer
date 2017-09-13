@@ -33,17 +33,25 @@ public class ManifestationReader implements ItemReader<Manifestation> {
 
     private List<Manifestation> manifestationData;
 
-    @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
 
-    @Value("${ub.statistics.getter.url}")
-    private String getterURL;
+    private String getterUrl;
 
     private Stockcontrol stockcontrol;
 
     ManifestationReader(Stockcontrol stockcontrol) {
         nextManifestationIndex = 0;
         this.stockcontrol = stockcontrol;
+    }
+
+    ManifestationReader setGetterUrl(String getterUrl) {
+        this.getterUrl = getterUrl;
+        return this;
+    }
+
+    ManifestationReader setSettingsUrl(String settingsUrl) {
+        this.settingsUrl = settingsUrl;
+        return this;
     }
 
     ManifestationReader setRestTemplate(RestTemplate restTemplate) {
@@ -111,16 +119,21 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         manifestationData = new ArrayList<>();
         for (String notation : notations) {
             log.info("collecting manifestations for notation " + notation);
+            log.info("querying url " + getterUrl + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation");
             ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
-                    getterURL + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
+                    getterUrl + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
             for (Manifestation manifestation : manifestations.getBody()) {
-                ResponseEntity<Manifestation> fullManifestation = restTemplate.getForEntity(
-                        getterURL + "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
-                        Manifestation.class
-                );
-                manifestationData.add(fullManifestation.getBody());
+                String titleID = manifestation.getTitleID();
+                log.info("building manifestation " + titleID);
+                if (titleID != null) {
+                    ResponseEntity<Manifestation> fullManifestation = restTemplate.getForEntity(
+                            getterUrl + "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
+                            Manifestation.class
+                    );
+                    manifestationData.add(fullManifestation.getBody());
+                }
             }
         }
     }

@@ -15,12 +15,16 @@ import java.util.List;
 
 public class AnalysisWriter implements ItemWriter {
 
-    @Value("${ub.statistics.data.url}")
-    private String dataURL;
-
     private ObjectMapper mapper = new ObjectMapper();
 
+    private String dataUrl;
+
     private static final Logger log = LoggerFactory.getLogger(AnalysisWriter.class);
+
+    public AnalysisWriter setDataUrl(String dataUrl) {
+        this.dataUrl = dataUrl;
+        return this;
+    }
 
     @Override
     public void write(List list) throws Exception {
@@ -28,7 +32,7 @@ public class AnalysisWriter implements ItemWriter {
             if (((Eventanalysis) analysis).getStatus().equals("finished")) {
                 String json = mapper.writeValueAsString(analysis);
                 HttpClient client = new HttpClient();
-                PostMethod post = new PostMethod(dataURL + "/eventanalysis");
+                PostMethod post = new PostMethod(dataUrl + "/eventanalysis");
                 RequestEntity entity = new StringRequestEntity(json, "application/json", null);
                 post.setRequestEntity(entity);
                 int status = client.executeMethod(post);
