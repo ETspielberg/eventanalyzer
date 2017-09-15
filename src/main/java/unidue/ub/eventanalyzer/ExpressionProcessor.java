@@ -30,13 +30,19 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
 
     @Override
     public Eventanalysis process(final Expression expression) throws Exception {
-        log.info("analyzing manifestation " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
+        log.info("analyzing expression  " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
 
         List<Event> events = new ArrayList<>();
         ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
         for (Item item : expression.getItems()) {
-            if (itemFilter.matches(item))
-                events.addAll(item.getEvents());
+            if (itemFilter.matches(item)) {
+                List<Event> itemEvents = item.getEvents();
+                for (Event event : itemEvents) {
+                    events.add(event);
+                    if (event.getEndEvent() != null)
+                        events.add(event.getEndEvent());
+                }
+            }
         }
 
         Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events,stockcontrol);

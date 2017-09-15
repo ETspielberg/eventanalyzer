@@ -45,6 +45,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
         analysis.setTitleId(manifestation.getTitleID());
         analysis.setShelfmark(manifestation.getShelfmark());
         analysis.setShelfmarkBase(manifestation.getShelfmarkBase());
+        analysis.setMab(manifestation.getBibliographicInformation().toString());
         return analysis;
     }
 }

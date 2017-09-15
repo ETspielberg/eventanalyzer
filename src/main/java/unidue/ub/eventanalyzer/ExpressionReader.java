@@ -54,9 +54,10 @@ public class ExpressionReader implements ItemReader<Expression> {
         else {
             for (Manifestation manifestation : manifestations) {
                 if (expressionData.containsKey(manifestation.getShelfmarkBase())) {
-                    expressionData.get(manifestation.getShelfmarkBase()).addDocument(manifestation);
+                    expressionData.get(manifestation.getShelfmarkBase()).addManifestation(manifestation);
                 } else {
                     Expression expression = new Expression(manifestation.getShelfmarkBase());
+                    expression.addManifestation(manifestation);
                     expressionData.put(expression.getShelfmarkBase(), expression);
                 }
             }

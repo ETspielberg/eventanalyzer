@@ -21,13 +21,7 @@ public class UsageCounters implements Cloneable  {
 
 	long stock;
 
-	long stockLBS;
-
-	long stockLendableNonLBS;
-
 	long stockLendable;
-
-	long stockNonLendable;
 
 	long stockDeleted;
 
@@ -45,17 +39,16 @@ public class UsageCounters implements Cloneable  {
 	 * 
 	 */
 
-	public UsageCounters() {
+	public UsageCounters() { }
+
+	public void reset() {
 		studentLoans = 0;
 		internLoans = 0;
 		externLoans = 0;
 		happLoans = 0;
 		elseLoans = 0;
 		stock = 0;
-		stockLBS = 0;
-		stockLendableNonLBS = 0;
 		stockLendable = 0;
-		stockNonLendable = 0;
 		stockDeleted = 0;
 		requests = 0;
 		daysLoaned = 0;
@@ -229,27 +222,6 @@ public class UsageCounters implements Cloneable  {
 		return stockLendable;
 	}
 
-	// stockLBS
-	/**
-	 * sets the value of items in the textbook collection at this day.
-	 * 
-	 * @param stockLBS
-	 *            new value of items in the textbook collection
-	 * @return dit the updated <code>UsageCounters</code>
-	 */
-	public UsageCounters setStockLBS(long stockLBS) {
-		this.stockLBS = stockLBS;
-		return this;
-	}
-
-	/**
-	 * retrieves the value of items in the textbook collection.
-	 * 
-	 * @return stockLBS the value of items in the textbook collection
-	 */
-	public long getStockLBS() {
-		return stockLBS;
-	}
 
 	// stockDeleted
 	/**
@@ -272,84 +244,8 @@ public class UsageCounters implements Cloneable  {
 	public long getStockDeleted() {
 		return stockDeleted;
 	}
-
-	// stockLendableNonLBS
-	/**
-	 * sets the value of circulation items being not part of the textbook
-	 * collection at this day.
-	 * 
-	 * @param stockLendableNonLBS
-	 *            new value of circulating items being not part of the textbook
-	 *            collection
-	 * @return dit the updated <code>UsageCounters</code>
-	 */
-	public UsageCounters setStockLendableNonLBS(long stockLendableNonLBS) {
-		this.stockLendableNonLBS = stockLendableNonLBS;
-		return this;
-	}
-
-	/**
-	 * retrieves the value of circulation items being not part of the textbook
-	 * collection at this day.
-	 * 
-	 * @return stockLendableNonLBS the value of circulation items being not part of the textbook
-	 * collection 
-	 */
-	public long getStockLendableNonLBS() {
-		return stockLendableNonLBS;
-	}
-
-	// stockNonLendable
-	/**
-	 * sets the value of non-circulation items at this day.
-	 * 
-	 * @param stockNonLendable
-	 *            new value of circulating items being not part of the textbook
-	 *            collection
-	 * @return dit the updated <code>UsageCounters</code>
-	 */
-	public UsageCounters setStockNonLendable(long stockNonLendable) {
-		this.stockNonLendable = stockNonLendable;
-		return this;
-	}
-
-	/**
-	 * retrieves the value of non-circulation items.
-	 * 
-	 * @return stockNonLendable the value of non-circulation items
-	 */
-	public long getStockNonLendable() {
-		return stockNonLendable;
-	}
-
 	
-	
-		/**
-	 * adds another <code>UsageCounters</code> counter. all the individual
-	 * counters are summed up, the day is kept from the original one.
-	 * 
-	 * @param dit
-	 *            new value of items loaned by students
-	 * @return dit added UsageCounters
-	 */
-	public UsageCounters plus(UsageCounters dit) {
-		studentLoans += dit.studentLoans;
-		internLoans += dit.internLoans;
-		externLoans += dit.externLoans;
-		happLoans += dit.happLoans;
-		elseLoans += dit.elseLoans;
-		stock += dit.stock;
-		stockLBS += dit.stockLBS;
-		stockLendableNonLBS += dit.stockLendableNonLBS;
-		stockLendable += dit.stockLendable;
-		stockNonLendable += dit.stockNonLendable;
-		stockDeleted += dit.stockDeleted;
-		requests += dit.requests;
-		daysRequested += dit.daysRequested;
-		daysStockLendable += dit.daysStockLendable;
-		daysLoaned += dit.daysLoaned;
-		return this;
-	}
+
 
 	/**
 	 * multiplies all counters with a given number of days.
@@ -362,9 +258,7 @@ public class UsageCounters implements Cloneable  {
 		UsageCounters product = new UsageCounters();
 		product.setStudentLoans(studentLoans * days).setInternLoans(internLoans * days)
 				.setExternLoans(externLoans * days).setHappLoans(happLoans * days).setElseLoans(elseLoans * days)
-				.setStock(stock * days).setStockLBS(stockLBS * days).setStockLendableNonLBS(stockLendableNonLBS * days)
-				.setStockLendable(stockLendable * days).setStockNonLendable(stockNonLendable * days)
-				.setRequests(requests * days);
+				.setStock(stock * days).setStockLendable(stockLendable * days).setRequests(requests * days);
 		return product;
 	}
 
@@ -450,10 +344,7 @@ public class UsageCounters implements Cloneable  {
 		clone.happLoans = happLoans;
 		clone.elseLoans = elseLoans;
 		clone.stock = stock;
-		clone.stockLBS = stockLBS;
-		clone.stockLendableNonLBS = stockLendableNonLBS;
 		clone.stockLendable = stockLendable;
-		clone.stockNonLendable = stockNonLendable;
 		clone.stockDeleted = stockDeleted;
 		clone.requests = requests;
 		clone.daysLoaned = daysLoaned;
@@ -465,7 +356,7 @@ public class UsageCounters implements Cloneable  {
 	@Override
 	public String toString() {
 		String data = studentLoans + "; " + internLoans + "; " + externLoans + "; " + happLoans + "; " + elseLoans  + "; " +
-				stock + "; " + stockLBS  + "; " + stockLendable + "; " + stockNonLendable + "; " + stockDeleted + "; " +
+				stock + "; " + stockLendable + "; " + stockDeleted + "; " +
 				requests + "; " +daysLoaned + "; " +daysStockLendable + "; " +daysRequested;
 		return data;
 	}

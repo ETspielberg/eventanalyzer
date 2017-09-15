@@ -1,5 +1,11 @@
 package unidue.ub.eventanalyzer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
@@ -15,6 +21,8 @@ import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -118,15 +126,12 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         }
         manifestationData = new ArrayList<>();
         for (String notation : notations) {
-            log.info("collecting manifestations for notation " + notation);
-            log.info("querying url " + getterUrl + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation");
             ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
                     getterUrl + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
-                log.info("building manifestation " + titleID);
                 if (titleID != null) {
                     ResponseEntity<Manifestation> fullManifestation = restTemplate.getForEntity(
                             getterUrl + "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
@@ -137,6 +142,7 @@ public class ManifestationReader implements ItemReader<Manifestation> {
             }
         }
     }
+
 
 
 

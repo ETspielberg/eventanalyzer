@@ -11,6 +11,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 
+import java.io.IOException;
 import java.util.List;
 
 public class AnalysisWriter implements ItemWriter {
@@ -28,8 +29,8 @@ public class AnalysisWriter implements ItemWriter {
 
     @Override
     public void write(List list) throws Exception {
-        for (Object analysis  :list) {
-            if (((Eventanalysis) analysis).getStatus().equals("finished")) {
+        for (Object analysis : list) {
+            if (((Eventanalysis) analysis).getStatus().equals("proposed")) {
                 String json = mapper.writeValueAsString(analysis);
                 HttpClient client = new HttpClient();
                 PostMethod post = new PostMethod(dataUrl + "/eventanalysis");
@@ -40,4 +41,5 @@ public class AnalysisWriter implements ItemWriter {
             }
         }
     }
+
 }

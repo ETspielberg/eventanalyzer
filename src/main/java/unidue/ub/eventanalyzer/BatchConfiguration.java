@@ -15,6 +15,8 @@ import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
 
+import static unidue.ub.eventanalyzer.EventanalyzerApplication.stockcontrol;
+
 @Configuration
 @EnableBatchProcessing
 public class BatchConfiguration {
@@ -51,7 +53,7 @@ public class BatchConfiguration {
 
     @Bean
     public ManifestationReader manifestationReader() {
-        ManifestationReader reader = new ManifestationReader(EventanalyzerApplication.stockcontrol());
+        ManifestationReader reader = new ManifestationReader(stockcontrol());
         reader.setNotationTemplate(notationTemplate())
                 .setRestTemplate(getterTemplate())
                 .setGetterUrl(gettersUrl)
@@ -61,19 +63,35 @@ public class BatchConfiguration {
 
     @Bean
     public ExpressionReader expressionReader() {
-        ExpressionReader reader =  new ExpressionReader(EventanalyzerApplication.stockcontrol(),manifestationReader());
+        ExpressionReader reader =  new ExpressionReader(stockcontrol(),manifestationReader());
         return reader;
 
     }
 
     @Bean
+    public StockcontrolSettingTasklet startingTasklet() {
+        StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
+        tasklet.setSettingsUrl(settingsUrl);
+        tasklet.setStockcontrol(stockcontrol());
+        return tasklet.setStatus("running");
+    }
+
+    @Bean
+    public StockcontrolSettingTasklet finishedTasklet() {
+        StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
+        tasklet.setSettingsUrl(settingsUrl);
+        tasklet.setStockcontrol(stockcontrol());
+        return tasklet.setStatus("finished");
+    }
+
+    @Bean
     public ManifestationProcessor manifestationProcessor() {
-        return new ManifestationProcessor(EventanalyzerApplication.stockcontrol());
+        return new ManifestationProcessor(stockcontrol());
     }
 
     @Bean
     public ExpressionProcessor expressionProcessor() {
-        return new ExpressionProcessor(EventanalyzerApplication.stockcontrol());
+        return new ExpressionProcessor(stockcontrol());
     }
 
     @Bean
@@ -88,24 +106,31 @@ public class BatchConfiguration {
         return jobBuilderFactory.get("eventanalyzerJob")
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .flow(step1())
-                .end()
+                .start(step1())
+                .next(step2())
+                .next(step3())
                 .build();
     }
 
-
     @Bean
     public Step step1() {
+        return stepBuilderFactory.get("step1")
+                .tasklet(startingTasklet())
+                .build();
+    }
+
+    @Bean
+    public Step step2() {
         Step step;
-        if (EventanalyzerApplication.stockcontrol().isGroupedAnalysis()) {
-            step = stepBuilderFactory.get("step1")
+        if (stockcontrol().isGroupedAnalysis()) {
+            step = stepBuilderFactory.get("step2")
                     .<Expression, Eventanalysis>chunk(10)
                     .reader(expressionReader())
                     .processor(expressionProcessor())
                     .writer(writer())
                     .build();
         } else {
-            step = stepBuilderFactory.get("step1")
+            step = stepBuilderFactory.get("step2")
                     .<Manifestation, Eventanalysis>chunk(10)
                     .reader(manifestationReader())
                     .processor(manifestationProcessor())
@@ -114,4 +139,12 @@ public class BatchConfiguration {
         }
         return step;
     }
+
+    @Bean
+    public Step step3() {
+        return stepBuilderFactory.get("step3")
+                .tasklet(finishedTasklet())
+                .build();
+    }
+
 }
