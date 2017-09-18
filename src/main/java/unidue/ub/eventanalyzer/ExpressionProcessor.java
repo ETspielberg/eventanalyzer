@@ -47,6 +47,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
 
         Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events,stockcontrol);
         analysis.setTitleId(expression.getShelfmarkBase());
+        analysis.setShelfmark(expression.getShelfmarkBase());
         return analysis;
     }
 }

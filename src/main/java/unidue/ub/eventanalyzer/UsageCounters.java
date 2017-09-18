@@ -33,6 +33,8 @@ public class UsageCounters implements Cloneable  {
 	
 	long daysRequested;
 
+	long calds;
+
 	/**
 	 * Builds a new instance of a <code>Daylongimline</code>-object, setting the
 	 * individual counters to 0.
@@ -51,6 +53,7 @@ public class UsageCounters implements Cloneable  {
 		stockLendable = 0;
 		stockDeleted = 0;
 		requests = 0;
+		calds = 0;
 		daysLoaned = 0;
 		daysRequested = 0;
 		daysStockLendable = 0;
@@ -244,8 +247,16 @@ public class UsageCounters implements Cloneable  {
 	public long getStockDeleted() {
 		return stockDeleted;
 	}
-	
 
+
+	public long getCalds() {
+		return calds;
+	}
+
+	public UsageCounters setCalds(long calds) {
+		this.calds = calds;
+		return this;
+	}
 
 	/**
 	 * multiplies all counters with a given number of days.
@@ -313,12 +324,12 @@ public class UsageCounters implements Cloneable  {
 	}
 
 	public double getRelativeLoan() {
-		return getAllLoans() / stock;
+		return (double) getAllLoans() / (double) stock;
 	}
 
 	public double getCorrectedRelativLoan() {
 		if (getReducedStock() > 0)
-			return (studentLoans + internLoans + externLoans + elseLoans) / getReducedStock();
+			return (double) (studentLoans + internLoans + externLoans + elseLoans) / (double) getReducedStock();
 		else return 0;
 	}
 
@@ -332,7 +343,7 @@ public class UsageCounters implements Cloneable  {
 
 	public double getMeanRelativeLoan() {
 		if (daysStockLendable != 0)
-			return daysLoaned / daysStockLendable;
+			return ((double) daysLoaned / (double) daysStockLendable);
 		else return 0;
 	}
 

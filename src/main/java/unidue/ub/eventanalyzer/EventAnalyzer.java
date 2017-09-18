@@ -92,7 +92,6 @@ public class EventAnalyzer {
             UsageCounters oldUsagecounter = usagecounter.clone();
 
             for (Event event : events) {
-                log.info(event.getType());
                 LocalDate eventDate;
                 try {
                     eventDate = LocalDate.parse(event.getDate().substring(0, 10), dtf);
@@ -116,11 +115,12 @@ public class EventAnalyzer {
                     analysis.setMaxRelativeLoan(Math.max(relativeLoan, analysis.getMaxRelativeLoan()));
                 } else
                     oldUsagecounter = usagecounter.clone();
-                long maxItemsNeeded = usagecounter.getStockLendable() + usagecounter.requests;
+                long maxItemsNeeded = usagecounter.getAllLoans() + usagecounter.requests;
                 if (eventDate.isAfter(startDateRequests)) {
                     analysis.setMaxNumberRequest(Math.max(usagecounter.requests, analysis.getNumberRequests()));
                     analysis.setMaxItemsNeeded(Math.max(maxItemsNeeded, analysis.getMaxItemsNeeded()));
                 }
+                log.info(usagecounter.getMeanRelativeLoan());
 
 
                 // try to get the end date. If no end date is given in the event,
@@ -171,7 +171,6 @@ public class EventAnalyzer {
                         usagecounter.daysRequested += days;
                     }
                 }
-                log.info(usagecounter.toString());
             }
             double slope = calculateSlope(allMaxLoansAbs, yearsBefore);
             analysis.setSlope(slope);
@@ -289,6 +288,8 @@ public class EventAnalyzer {
             usagecounter.requests++;
         } else if (event.getType().equals("hold")) {
             usagecounter.requests--;
+        } else if (event.getType().equals("cald")) {
+            usagecounter.calds++;
         }
     }
 
