@@ -5,15 +5,22 @@ import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
+import unidue.ub.settings.fachref.Stockcontrol;
+
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static unidue.ub.eventanalyzer.EventanalyzerApplication.stockcontrol;
 
@@ -23,6 +30,15 @@ public class BatchConfiguration {
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
+        return executor;
+    }
 
     @Autowired
     public StepBuilderFactory stepBuilderFactory;

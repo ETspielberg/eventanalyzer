@@ -19,7 +19,7 @@ public class JobExecutionListener extends JobExecutionListenerSupport {
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
-
+        log.info("--- Job starting ---");
     }
 
     @Override

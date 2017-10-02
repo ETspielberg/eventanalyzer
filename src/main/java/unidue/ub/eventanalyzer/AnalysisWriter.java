@@ -8,10 +8,8 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 
-import java.io.IOException;
 import java.util.List;
 
 public class AnalysisWriter implements ItemWriter {
