@@ -1,15 +1,8 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resources;
@@ -21,8 +14,6 @@ import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -47,27 +38,27 @@ public class ManifestationReader implements ItemReader<Manifestation> {
 
     private Stockcontrol stockcontrol;
 
-    ManifestationReader(Stockcontrol stockcontrol) {
+    public ManifestationReader(Stockcontrol stockcontrol) {
         nextManifestationIndex = 0;
         this.stockcontrol = stockcontrol;
     }
 
-    ManifestationReader setGetterUrl(String getterUrl) {
+    public ManifestationReader setGetterUrl(String getterUrl) {
         this.getterUrl = getterUrl;
         return this;
     }
 
-    ManifestationReader setSettingsUrl(String settingsUrl) {
+    public ManifestationReader setSettingsUrl(String settingsUrl) {
         this.settingsUrl = settingsUrl;
         return this;
     }
 
-    ManifestationReader setRestTemplate(RestTemplate restTemplate) {
+    public ManifestationReader setRestTemplate(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         return this;
     }
 
-    ManifestationReader setNotationTemplate(RestTemplate notationTemplate) {
+    public ManifestationReader setNotationTemplate(RestTemplate notationTemplate) {
         this.notationTemplate = notationTemplate;
         return this;
     }

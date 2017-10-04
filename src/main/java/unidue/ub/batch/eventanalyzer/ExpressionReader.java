@@ -1,12 +1,9 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 import org.springframework.batch.item.ItemReader;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
-import unidue.ub.settings.fachref.Notation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.net.URISyntaxException;
@@ -29,7 +26,7 @@ public class ExpressionReader implements ItemReader<Expression> {
     ExpressionReader(Stockcontrol stockcontrol) { noExpressionsFound = true;
     this.stockcontrol = stockcontrol;}
 
-    ExpressionReader(Stockcontrol stockcontrol, ManifestationReader manifestationReader) {
+    public ExpressionReader(Stockcontrol stockcontrol, ManifestationReader manifestationReader) {
         noExpressionsFound = true;
         this.stockcontrol = stockcontrol;
         this.manifestationReader = manifestationReader;

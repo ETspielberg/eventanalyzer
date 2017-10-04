@@ -1,11 +1,12 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,18 +16,18 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.client.RestTemplate;
+import unidue.ub.batch.eventanalyzer.*;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
-import static unidue.ub.eventanalyzer.EventanalyzerApplication.stockcontrol;
-
 @Configuration
 @EnableBatchProcessing
 public class BatchConfiguration {
+
+    private final static Logger log = LoggerFactory.getLogger(BatchConfiguration.class);
+    private String identifier;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -93,6 +94,26 @@ public class BatchConfiguration {
     }
 
     @Bean
+    public Stockcontrol stockcontrol(){
+        identifier = "";
+        if (!JobLauncherController.identifier.isEmpty()) {
+            identifier = JobLauncherController.identifier;
+        }
+        else if (!EventanalyzerApplication.identifier.isEmpty()) {
+            identifier = EventanalyzerApplication.identifier;
+        }
+        ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
+                "http://localhost:11300/stockcontrol/" + identifier ,
+                Stockcontrol.class
+        );
+        Stockcontrol stockcontrol = new Stockcontrol();
+        stockcontrol.setGroupedAnalysis(false);
+        if (response.getStatusCodeValue() == 200)
+            stockcontrol = response.getBody();
+        return stockcontrol;
+    }
+
+    @Bean
     public StockcontrolSettingTasklet finishedTasklet() {
         StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
         tasklet.setSettingsUrl(settingsUrl);
@@ -138,21 +159,21 @@ public class BatchConfiguration {
     @Bean
     public Step step2() {
         Step step;
-        if (stockcontrol().isGroupedAnalysis()) {
-            step = stepBuilderFactory.get("step2")
-                    .<Expression, Eventanalysis>chunk(10)
-                    .reader(expressionReader())
-                    .processor(expressionProcessor())
-                    .writer(writer())
-                    .build();
-        } else {
-            step = stepBuilderFactory.get("step2")
-                    .<Manifestation, Eventanalysis>chunk(10)
-                    .reader(manifestationReader())
-                    .processor(manifestationProcessor())
-                    .writer(writer())
-                    .build();
-        }
+            if (stockcontrol().isGroupedAnalysis()) {
+                step = stepBuilderFactory.get("step2")
+                        .<Expression, Eventanalysis>chunk(10)
+                        .reader(expressionReader())
+                        .processor(expressionProcessor())
+                        .writer(writer())
+                        .build();
+            } else {
+                step = stepBuilderFactory.get("step2")
+                        .<Manifestation, Eventanalysis>chunk(10)
+                        .reader(manifestationReader())
+                        .processor(manifestationProcessor())
+                        .writer(writer())
+                        .build();
+            }
         return step;
     }
 

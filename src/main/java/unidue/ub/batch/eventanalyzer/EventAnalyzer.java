@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.log4j.Logger;

@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

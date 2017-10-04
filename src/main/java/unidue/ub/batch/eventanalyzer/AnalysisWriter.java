@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.httpclient.HttpClient;

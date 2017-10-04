@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 import unidue.ub.media.monographs.Event;
 

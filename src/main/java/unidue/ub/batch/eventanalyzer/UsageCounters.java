@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 /**
  * Plain old java object holding the individual counters for different user

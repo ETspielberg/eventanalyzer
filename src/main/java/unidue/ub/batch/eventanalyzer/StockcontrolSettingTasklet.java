@@ -1,6 +1,5 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -37,7 +36,7 @@ public class StockcontrolSettingTasklet implements Tasklet {
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
         post.setRequestEntity(entity);
         int responseStatus = client.executeMethod(post);
-        log.info("set stockcontrol" + stockcontrol.getIdentifier() + "status to " + status + " with return status " + responseStatus);
+        log.info("set stockcontrol '" + stockcontrol.getIdentifier() + "' status to " + status + " with return status " + responseStatus);
         return RepeatStatus.FINISHED;
     }
 

@@ -1,4 +1,4 @@
-package unidue.ub.eventanalyzer;
+package unidue.ub.batch.eventanalyzer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
     @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
 
-    ManifestationProcessor(Stockcontrol stockcontrol) {
+    public ManifestationProcessor(Stockcontrol stockcontrol) {
         this.stockcontrol = stockcontrol;
     }
 
