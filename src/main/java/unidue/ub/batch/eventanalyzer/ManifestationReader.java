@@ -153,5 +153,6 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         JobExecution jobExecution = stepExecution.getJobExecution();
         ExecutionContext jobContext = jobExecution.getExecutionContext();
         this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader" );
     }
 }

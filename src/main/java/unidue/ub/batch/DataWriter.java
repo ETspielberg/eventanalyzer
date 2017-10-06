@@ -17,17 +17,10 @@ public class DataWriter implements ItemWriter {
 
     private String dataUrl;
 
-    private String type;
-
     private static final Logger log = LoggerFactory.getLogger(DataWriter.class);
 
     public DataWriter setDataUrl(String dataUrl) {
         this.dataUrl = dataUrl;
-        return this;
-    }
-
-    public DataWriter setType(String type) {
-        this.type = type;
         return this;
     }
 
@@ -36,11 +29,12 @@ public class DataWriter implements ItemWriter {
         for (Object object : list) {
                 String json = mapper.writeValueAsString(object);
                 HttpClient client = new HttpClient();
-                PostMethod post = new PostMethod(dataUrl + "/" + type);
+                String objectType = object.getClass().getSimpleName();
+                PostMethod post = new PostMethod(dataUrl + "/" + objectType.toLowerCase());
                 RequestEntity entity = new StringRequestEntity(json, "application/json", null);
                 post.setRequestEntity(entity);
                 int status = client.executeMethod(post);
-                log.info("posted analysis with return status " + status);
+                log.info("posted " + objectType + " to " + dataUrl + "/" + objectType.toLowerCase() + " with return status " + status);
         }
     }
 

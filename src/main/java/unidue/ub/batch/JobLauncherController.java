@@ -17,11 +17,24 @@ public class JobLauncherController {
     @Autowired
     Job eventanalyzerJob;
 
+    @Autowired
+    Job sushiJob;
+
     @RequestMapping("/batch/eventanalyzer")
     public void runEventanalzer(String identifier) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("stockcontrol.identifier", identifier);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(eventanalyzerJob,jobParameters);
+    }
+
+    @RequestMapping("/batch/sushi")
+    public void runSushiClient(String identifier, String type, String mode) throws Exception {
+        JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
+        jobParametersBuilder.addString("sushiprovider.identifier", identifier)
+        .addString("type" , type)
+        .addString("mode" , mode);
+        JobParameters jobParameters = jobParametersBuilder.toJobParameters();
+        jobLauncher.run(sushiJob,jobParameters);
     }
 }

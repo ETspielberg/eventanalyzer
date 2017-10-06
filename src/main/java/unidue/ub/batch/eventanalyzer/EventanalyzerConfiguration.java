@@ -111,7 +111,7 @@ public class EventanalyzerConfiguration {
     @StepScope
     public DataWriter writer() {
         DataWriter writer = new DataWriter();
-        writer.setDataUrl(dataUrl).setType("eventanalysis");
+        writer.setDataUrl(dataUrl);
         return writer;
     }
 
