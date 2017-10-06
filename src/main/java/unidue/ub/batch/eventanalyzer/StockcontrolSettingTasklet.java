@@ -19,8 +19,6 @@ public class StockcontrolSettingTasklet implements Tasklet {
 
     private String settingsUrl;
 
-    private Stockcontrol stockcontrol;
-
     private String status;
 
     private final static Logger log = LoggerFactory.getLogger(StockcontrolSettingTasklet.class);
@@ -28,9 +26,9 @@ public class StockcontrolSettingTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution contribution,
                                 ChunkContext chunkContext) throws IOException {
+        Stockcontrol stockcontrol = (Stockcontrol) chunkContext.getStepContext().getJobExecutionContext().get("stockcontrol");
         stockcontrol.setStatus(status);
-        ObjectMapper mapper = new ObjectMapper();
-        String json = mapper.writeValueAsString(stockcontrol);
+        String json = new ObjectMapper().writeValueAsString(stockcontrol);
         HttpClient client = new HttpClient();
         PostMethod post = new PostMethod(settingsUrl + "/stockcontrol");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
@@ -40,29 +38,12 @@ public class StockcontrolSettingTasklet implements Tasklet {
         return RepeatStatus.FINISHED;
     }
 
-    public String getSettingsUrl() {
-        return settingsUrl;
-    }
-
-    public StockcontrolSettingTasklet setSettingsUrl(String settingsUrl) {
+    StockcontrolSettingTasklet setSettingsUrl(String settingsUrl) {
         this.settingsUrl = settingsUrl;
         return this;
     }
 
-    public Stockcontrol getStockcontrol() {
-        return stockcontrol;
-    }
-
-    public StockcontrolSettingTasklet setStockcontrol(Stockcontrol stockcontrol) {
-        this.stockcontrol = stockcontrol;
-        return this;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public StockcontrolSettingTasklet setStatus(String status) {
+    StockcontrolSettingTasklet setStatus(String status) {
         this.status = status;
         return this;
     }

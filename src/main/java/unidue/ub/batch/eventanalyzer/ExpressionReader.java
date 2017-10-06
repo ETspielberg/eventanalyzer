@@ -1,7 +1,10 @@
 package unidue.ub.batch.eventanalyzer;
 
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
@@ -15,20 +18,14 @@ public class ExpressionReader implements ItemReader<Expression> {
 
     private Enumeration<Expression> expressionEnumeration;
 
-    private Stockcontrol stockcontrol;
-
-    private RestTemplate restTemplate;
-
-    private RestTemplate notationTemplate;
-
     private ManifestationReader manifestationReader;
 
-    ExpressionReader(Stockcontrol stockcontrol) { noExpressionsFound = true;
-    this.stockcontrol = stockcontrol;}
+    ExpressionReader() { noExpressionsFound = true;}
 
-    public ExpressionReader(Stockcontrol stockcontrol, ManifestationReader manifestationReader) {
+    private Stockcontrol stockcontrol;
+
+    public ExpressionReader(ManifestationReader manifestationReader) {
         noExpressionsFound = true;
-        this.stockcontrol = stockcontrol;
         this.manifestationReader = manifestationReader;
     }
 
@@ -44,11 +41,10 @@ public class ExpressionReader implements ItemReader<Expression> {
 
     private void collectManifestation() throws URISyntaxException {
         Hashtable<String,Expression> expressionData = new Hashtable<>();
+        manifestationReader.setStockcontrol(stockcontrol);
         manifestationReader.collectManifestation();
         List<Manifestation> manifestations  = manifestationReader.getManifestations();
-        if(manifestations.size() == 0)
-            return;
-        else {
+        if(manifestations.size() != 0)  {
             for (Manifestation manifestation : manifestations) {
                 if (expressionData.containsKey(manifestation.getShelfmarkBase())) {
                     expressionData.get(manifestation.getShelfmarkBase()).addManifestation(manifestation);
@@ -63,13 +59,10 @@ public class ExpressionReader implements ItemReader<Expression> {
         }
     }
 
-    public ExpressionReader setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-        return this;
-    }
-
-    public ExpressionReader setNotationTemplate(RestTemplate notationTemplate) {
-        this.notationTemplate = notationTemplate;
-        return this;
+    @BeforeStep
+    public void retrieveStockcontrol(StepExecution stepExecution) {
+        JobExecution jobExecution = stepExecution.getJobExecution();
+        ExecutionContext jobContext = jobExecution.getExecutionContext();
+        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
     }
 }

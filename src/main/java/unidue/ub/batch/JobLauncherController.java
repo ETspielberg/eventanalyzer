@@ -15,18 +15,13 @@ public class JobLauncherController {
     JobLauncher jobLauncher;
 
     @Autowired
-    Job job;
-
-    static String identifier = "";
+    Job eventanalyzerJob;
 
     @RequestMapping("/batch/eventanalyzer")
     public void runEventanalzer(String identifier) throws Exception {
-        if (identifier != null)
-        this.identifier = identifier;
-
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("stockcontrol.identifier", identifier);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
-        jobLauncher.run(job,jobParameters);
+        jobLauncher.run(eventanalyzerJob,jobParameters);
     }
 }

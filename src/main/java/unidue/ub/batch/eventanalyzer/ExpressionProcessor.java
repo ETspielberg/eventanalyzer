@@ -2,7 +2,11 @@ package unidue.ub.batch.eventanalyzer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
@@ -24,8 +28,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
     @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
 
-    public ExpressionProcessor(Stockcontrol stockcontrol) {
-        this.stockcontrol = stockcontrol;
+    public ExpressionProcessor() {
     }
 
     @Override
@@ -49,5 +52,13 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
         analysis.setTitleId(expression.getShelfmarkBase());
         analysis.setShelfmark(expression.getShelfmarkBase());
         return analysis;
+    }
+
+    @BeforeStep
+    public void retrieveStockcontrol(StepExecution stepExecution) {
+        JobExecution jobExecution = stepExecution.getJobExecution();
+        ExecutionContext jobContext = jobExecution.getExecutionContext();
+        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by expression processor" );
     }
 }

@@ -2,6 +2,10 @@ package unidue.ub.batch.eventanalyzer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
@@ -21,9 +25,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
     @Value("${ub.statistics.settings.url}")
     private String settingsUrl;
 
-    public ManifestationProcessor(Stockcontrol stockcontrol) {
-        this.stockcontrol = stockcontrol;
-    }
+    public ManifestationProcessor() { }
 
     @Override
     public Eventanalysis process(final Manifestation manifestation) throws Exception {
@@ -46,5 +48,13 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
         analysis.setShelfmark(manifestation.getShelfmark());
         analysis.setMab(manifestation.getBibliographicInformation().toString());
         return analysis;
+    }
+
+    @BeforeStep
+    public void retrieveStockcontrol(StepExecution stepExecution) {
+        JobExecution jobExecution = stepExecution.getJobExecution();
+        ExecutionContext jobContext = jobExecution.getExecutionContext();
+        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader" );
     }
 }

@@ -2,6 +2,10 @@ package unidue.ub.batch.eventanalyzer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.MediaTypes;
@@ -38,9 +42,8 @@ public class ManifestationReader implements ItemReader<Manifestation> {
 
     private Stockcontrol stockcontrol;
 
-    public ManifestationReader(Stockcontrol stockcontrol) {
+    public ManifestationReader() {
         nextManifestationIndex = 0;
-        this.stockcontrol = stockcontrol;
     }
 
     public ManifestationReader setGetterUrl(String getterUrl) {
@@ -135,11 +138,20 @@ public class ManifestationReader implements ItemReader<Manifestation> {
     }
 
 
-
+    public void setStockcontrol(Stockcontrol stockcontrol) {
+        this.stockcontrol = stockcontrol;
+    }
 
     private boolean noManifestationsFound() {
         return (this.manifestationData == null);
     }
 
     List<Manifestation> getManifestations() { return manifestationData; }
+
+    @BeforeStep
+    public void retrieveStockcontrol(StepExecution stepExecution) {
+        JobExecution jobExecution = stepExecution.getJobExecution();
+        ExecutionContext jobContext = jobExecution.getExecutionContext();
+        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
+    }
 }

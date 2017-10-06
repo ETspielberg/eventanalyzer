@@ -120,7 +120,6 @@ public class EventAnalyzer {
                     analysis.setMaxNumberRequest(Math.max(usagecounter.requests, analysis.getNumberRequests()));
                     analysis.setMaxItemsNeeded(Math.max(maxItemsNeeded, analysis.getMaxItemsNeeded()));
                 }
-                log.info(usagecounter.getMeanRelativeLoan());
 
 
                 // try to get the end date. If no end date is given in the event,
