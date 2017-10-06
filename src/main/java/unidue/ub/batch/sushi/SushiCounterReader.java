@@ -1,6 +1,8 @@
 package unidue.ub.batch.sushi;
 
 import org.jdom2.JDOMException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
@@ -25,11 +27,17 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
 
     private Sushiprovider sushiprovider;
 
+    private Logger log = LoggerFactory.getLogger(this.getClass());
+
     @Value("#{jobParameters['sushiprovider.mode'] ?: 'update'}")
     private String mode;
 
     @Value("#{jobParameters['sushiprovider.type'] ?: 'JR1'}")
     private String type;
+
+    private SOAPMessage soapMessage;
+
+    private List<Counter> counters;
 
     @Override
     public Counter read() throws JDOMException, SOAPException, IOException {
@@ -48,10 +56,15 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1));
             }
         }
-        SOAPMessage message = sushiClient.getResponse();
-        List<Counter> counters = CounterTools.convertSOAPMessageToCounters(message);
-        Iterator<Counter> iterator = counters.iterator();
-        return iterator.next();
+        if (soapMessage == null) {
+            soapMessage = sushiClient.getResponse();
+            log.info("retrieving response from sushi provider");
+            counters = CounterTools.convertSOAPMessageToCounters(soapMessage);
+        }
+        if (!counters.isEmpty())
+            return counters.remove(0);
+
+        return null;
 
     }
 

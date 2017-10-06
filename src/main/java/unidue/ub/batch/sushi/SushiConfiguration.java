@@ -6,6 +6,8 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,14 +56,44 @@ public class SushiConfiguration {
     }
 
     @Bean
+    @StepScope
+    public SushiproviderSettingTasklet sushiStartingTasklet() {
+        SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
+        tasklet.setSettingsUrl(settingsUrl);
+        return tasklet.setStatus("running");
+    }
+
+    @Bean
+    @StepScope
+    public SushiproviderSettingTasklet sushiFinishedTasklet() {
+        SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
+        tasklet.setSettingsUrl(settingsUrl);
+        return tasklet.setStatus("finished");
+    }
+
+    @Bean
     public SushiFlowDecision sushiDecision() {
         return new SushiFlowDecision();
     }
 
     @Bean
+    public Step sushiproviderSetStart() {
+        return stepBuilderFactory.get("startStep")
+        .tasklet(sushiStartingTasklet())
+        .build();
+    }
+
+    @Bean
+    public Step sushiproviderSetFinished() {
+        return stepBuilderFactory.get("endStep")
+                .tasklet(sushiFinishedTasklet())
+                .build();
+    }
+
+    @Bean
     public Step step() {
         return stepBuilderFactory.get("step")
-                .<Manifestation, Eventanalysis>chunk(10)
+                .<Manifestation, Eventanalysis>chunk(100)
                 .reader(reader())
                 .writer(writer())
                 .build();
@@ -74,16 +106,23 @@ public class SushiConfiguration {
                 .build();
     }
 
+    @Bean
+    public Flow sushiFlow() {
+        FlowBuilder<Flow> flowBuilder  = new FlowBuilder<>("manifestationFlow");
+        return flowBuilder
+                .start(sushiproviderSetStart())
+                .next(step())
+                .next(sushiproviderSetFinished()).end();
+    }
 
     @Bean
     public Job sushiJob() {
-
         return jobBuilderFactory.get("sushiJob")
                 .incrementer(new RunIdIncrementer())
                 .start(init())
                 .next(sushiDecision())
                 .on(sushiDecision().COMPLETED)
-                .to(step())
+                .to(sushiFlow())
                 .from(sushiDecision())
                 .on(sushiDecision().UNKNOWN)
                 .end()

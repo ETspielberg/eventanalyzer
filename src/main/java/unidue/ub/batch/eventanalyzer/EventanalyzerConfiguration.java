@@ -125,7 +125,6 @@ public class EventanalyzerConfiguration {
 
     @Bean
     public Job eventanalyzerJob(JobExecutionListener listener) {
-        //
         FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("eventanalyzerFlow");
         Flow flow = flowBuilder
                 .start(initStockcontrol())
