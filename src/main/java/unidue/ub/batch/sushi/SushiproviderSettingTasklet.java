@@ -32,12 +32,13 @@ public class SushiproviderSettingTasklet implements Tasklet {
         sushiprovider.setStatus(status);
         sushiprovider.setLastRun(new Date());
         String json = new ObjectMapper().writeValueAsString(sushiprovider);
+        log.info(json);
         HttpClient client = new HttpClient();
-        PostMethod post = new PostMethod(settingsUrl + "/stockcontrol");
+        PostMethod post = new PostMethod(settingsUrl + "/sushiprovider");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
         post.setRequestEntity(entity);
         int responseStatus = client.executeMethod(post);
-        log.info("set sushiprovider '" + sushiprovider.getId() + "' status to " + status + " with return status " + responseStatus);
+        log.info("set sushiprovider '" + sushiprovider.getIdentifier() + "' status to " + status + " with return status " + responseStatus);
         return RepeatStatus.FINISHED;
     }
 

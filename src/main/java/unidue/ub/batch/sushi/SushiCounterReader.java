@@ -11,13 +11,14 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Counter;
-import unidue.ub.media.analysis.CounterTools;
+import unidue.ub.media.tools.CounterTools;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.*;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.time.LocalDateTime;
-import java.util.Iterator;
 import java.util.List;
 
 @StepScope
@@ -29,10 +30,10 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
 
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Value("#{jobParameters['sushiprovider.mode'] ?: 'update'}")
+    @Value("#{jobParameters['sushi.mode'] ?: 'update'}")
     private String mode;
 
-    @Value("#{jobParameters['sushiprovider.type'] ?: 'JR1'}")
+    @Value("#{jobParameters['sushi.type'] ?: 'JR1'}")
     private String type;
 
     private SOAPMessage soapMessage;
@@ -54,12 +55,16 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                     timeshift = 2;
                 sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
                 sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1));
+                break;
             }
         }
         if (soapMessage == null) {
             soapMessage = sushiClient.getResponse();
-            log.info("retrieving response from sushi provider");
-            counters = CounterTools.convertSOAPMessageToCounters(soapMessage);
+            log.info("retrieving " + type + " report from sushi provider");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            soapMessage.writeTo(out);
+            log.info(out.toString());
+            counters = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
         }
         if (!counters.isEmpty())
             return counters.remove(0);

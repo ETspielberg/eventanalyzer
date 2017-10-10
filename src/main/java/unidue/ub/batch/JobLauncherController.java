@@ -8,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.Date;
+
 @Controller
+@RequestMapping("/batch")
 public class JobLauncherController {
 
     @Autowired
@@ -20,7 +23,10 @@ public class JobLauncherController {
     @Autowired
     Job sushiJob;
 
-    @RequestMapping("/batch/eventanalyzer")
+    @Autowired
+    Job nrequestsJob;
+
+    @RequestMapping("/eventanalyzer")
     public void runEventanalzer(String identifier) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("stockcontrol.identifier", identifier);
@@ -28,13 +34,21 @@ public class JobLauncherController {
         jobLauncher.run(eventanalyzerJob,jobParameters);
     }
 
-    @RequestMapping("/batch/sushi")
+    @RequestMapping("/sushi")
     public void runSushiClient(String identifier, String type, String mode) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("sushiprovider.identifier", identifier)
-        .addString("type" , type)
-        .addString("mode" , mode);
+        .addString("sushi.type" , type)
+        .addString("sushi.mode" , mode);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(sushiJob,jobParameters);
+    }
+
+    @RequestMapping("/nrequests")
+    public void runNrequestsCollector() throws Exception {
+        JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
+        jobParametersBuilder.addDate("date",new Date());
+        JobParameters jobParameters = jobParametersBuilder.toJobParameters();
+        jobLauncher.run(nrequestsJob,jobParameters);
     }
 }

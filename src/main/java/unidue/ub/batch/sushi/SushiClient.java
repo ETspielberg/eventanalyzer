@@ -3,8 +3,6 @@ package unidue.ub.batch.sushi;
 import org.jdom2.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import unidue.ub.media.analysis.Counter;
-import unidue.ub.media.analysis.CounterTools;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.*;
@@ -12,7 +10,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 public class SushiClient {
 

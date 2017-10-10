@@ -44,10 +44,13 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
             }
         }
         Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events, stockcontrol);
-        analysis.setTitleId(manifestation.getTitleID());
-        analysis.setShelfmark(manifestation.getShelfmark());
-        analysis.setMab(manifestation.getBibliographicInformation().toString());
-        return analysis;
+        if (analysis.getProposedDeletion() > 0 || analysis.getProposedPurchase() > 0) {
+            analysis.setTitleId(manifestation.getTitleID());
+            analysis.setShelfmark(manifestation.getShelfmark());
+            analysis.setMab(manifestation.getBibliographicInformation().toString());
+            return analysis;
+        } else
+            return null;
     }
 
     @BeforeStep
