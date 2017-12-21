@@ -19,6 +19,7 @@ import unidue.ub.batch.DataWriter;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Manifestation;
+import unidue.ub.settings.fachref.Status;
 
 
 @Configuration
@@ -79,7 +80,7 @@ public class EventanalyzerConfiguration {
     public StockcontrolSettingTasklet startingTasklet() {
         StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
         tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus("running");
+        return tasklet.setStatus(Status.RUNNING);
     }
 
     @Bean
@@ -87,7 +88,7 @@ public class EventanalyzerConfiguration {
     public StockcontrolSettingTasklet finishedTasklet() {
         StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
         tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus("finished");
+        return tasklet.setStatus(Status.FINISHED);
     }
 
     @Bean

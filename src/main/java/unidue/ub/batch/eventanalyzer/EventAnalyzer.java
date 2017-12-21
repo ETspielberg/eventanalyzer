@@ -222,8 +222,7 @@ public class EventAnalyzer {
             if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= stockcontrol.getMinimumDaysOfRequest()) {
                 analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
             }
-
-            analysis.setStatus("proposed");
+             analysis.setStatus("proposed");
         } else {
             analysis.setStatus("noEvents");
         }

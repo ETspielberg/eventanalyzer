@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @StepScope
@@ -27,8 +28,6 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     SushiCounterReader( ) {}
 
     private Sushiprovider sushiprovider;
-
-    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Value("#{jobParameters['sushi.mode'] ?: 'update'}")
     private String mode;
@@ -40,37 +39,50 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
 
     private List<Counter> counters;
 
+    private boolean collected = false;
+
     @Override
     public Counter read() throws JDOMException, SOAPException, IOException {
+        if (!collected)
+            collectCounters();
+        if (!counters.isEmpty())
+            return counters.remove(0);
+        return null;
+    }
+
+    private void collectCounters() throws JDOMException, SOAPException, IOException {
         SushiClient sushiClient = new SushiClient();
         sushiClient.setProvider(sushiprovider);
         sushiClient.setReportType(type);
+        LocalDateTime TODAY  = LocalDateTime.now();
+        int timeshift;
+        if (TODAY.getDayOfMonth() < 15)
+            timeshift = 3;
+        else
+            timeshift = 2;
         switch (mode) {
             case "update" : {
-                LocalDateTime TODAY  = LocalDateTime.now();
-                int timeshift;
-                if (TODAY.getDayOfMonth() < 15)
-                    timeshift = 3;
-                else
-                    timeshift = 2;
-                sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
-                sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1));
+                counters = executeSushiClient(sushiClient,timeshift);
                 break;
             }
+            case "full" : {
+                while (TODAY.minusMonths(timeshift).getYear() >= 2000) {
+                    counters.addAll(executeSushiClient(sushiClient,timeshift));
+                    timeshift += 1;
+                }
+            }
         }
-        if (soapMessage == null) {
-            soapMessage = sushiClient.getResponse();
-            log.info("retrieving " + type + " report from sushi provider");
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            soapMessage.writeTo(out);
-            log.info(out.toString());
-            counters = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
-        }
-        if (!counters.isEmpty())
-            return counters.remove(0);
+        collected = true;
+    }
 
-        return null;
-
+    private List<Counter> executeSushiClient(SushiClient sushiClient, int timeshift) throws JDOMException, SOAPException, IOException {
+        List<Counter> countersFound = new ArrayList<>();
+        sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
+        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1));
+        soapMessage = sushiClient.getResponse();
+        if (soapMessage != null)
+            countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
+        return  countersFound;
     }
 
     @BeforeStep

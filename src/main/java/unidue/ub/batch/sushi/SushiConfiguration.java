@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import unidue.ub.batch.DataWriter;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Manifestation;
+import unidue.ub.settings.fachref.Status;
 
 @Configuration
 @EnableBatchProcessing
@@ -60,7 +61,7 @@ public class SushiConfiguration {
     public SushiproviderSettingTasklet sushiStartingTasklet() {
         SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
         tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus("running");
+        return tasklet.setStatus(Status.RUNNING);
     }
 
     @Bean
@@ -68,7 +69,7 @@ public class SushiConfiguration {
     public SushiproviderSettingTasklet sushiFinishedTasklet() {
         SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
         tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus("finished");
+        return tasklet.setStatus(Status.FINISHED);
     }
 
     @Bean

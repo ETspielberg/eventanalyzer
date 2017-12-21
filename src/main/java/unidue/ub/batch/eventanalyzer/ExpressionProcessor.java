@@ -51,6 +51,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
         if (analysis.getProposedPurchase() > 0 || analysis.getProposedDeletion() > 0) {
             analysis.setTitleId(expression.getShelfmarkBase());
             analysis.setShelfmark(expression.getShelfmarkBase());
+            analysis.setMab(expression.getBibliographicInformation().toString());
             return analysis;
         } else
             return null;

@@ -11,17 +11,18 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
-import unidue.ub.settings.fachref.Stockcontrol;
+import unidue.ub.settings.fachref.Status;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 import java.io.IOException;
-import java.util.Date;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class SushiproviderSettingTasklet implements Tasklet {
 
     private String settingsUrl;
 
-    private String status;
+    private Status status;
 
     private final static Logger log = LoggerFactory.getLogger(SushiproviderSettingTasklet.class);
 
@@ -30,7 +31,7 @@ public class SushiproviderSettingTasklet implements Tasklet {
                                 ChunkContext chunkContext) throws IOException {
         Sushiprovider sushiprovider = (Sushiprovider) chunkContext.getStepContext().getJobExecutionContext().get("sushiprovider");
         sushiprovider.setStatus(status);
-        sushiprovider.setLastRun(new Date());
+        sushiprovider.setLastrun(Timestamp.valueOf(LocalDateTime.now()));
         String json = new ObjectMapper().writeValueAsString(sushiprovider);
         log.info(json);
         HttpClient client = new HttpClient();
@@ -47,7 +48,7 @@ public class SushiproviderSettingTasklet implements Tasklet {
         return this;
     }
 
-    SushiproviderSettingTasklet setStatus(String status) {
+    SushiproviderSettingTasklet setStatus(Status status) {
         this.status = status;
         return this;
     }
