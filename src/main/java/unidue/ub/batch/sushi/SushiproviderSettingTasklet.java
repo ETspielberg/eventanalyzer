@@ -20,11 +20,8 @@ import java.time.LocalDateTime;
 
 public class SushiproviderSettingTasklet implements Tasklet {
 
-    private String settingsUrl;
-
-    private Status status;
-
     private final static Logger log = LoggerFactory.getLogger(SushiproviderSettingTasklet.class);
+    private Status status;
 
     @Override
     public RepeatStatus execute(StepContribution contribution,
@@ -35,17 +32,12 @@ public class SushiproviderSettingTasklet implements Tasklet {
         String json = new ObjectMapper().writeValueAsString(sushiprovider);
         log.info(json);
         HttpClient client = new HttpClient();
-        PostMethod post = new PostMethod(settingsUrl + "/sushiprovider");
+        PostMethod post = new PostMethod("/api/settings/sushiprovider");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
         post.setRequestEntity(entity);
         int responseStatus = client.executeMethod(post);
         log.info("set sushiprovider '" + sushiprovider.getIdentifier() + "' status to " + status + " with return status " + responseStatus);
         return RepeatStatus.FINISHED;
-    }
-
-    SushiproviderSettingTasklet setSettingsUrl(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-        return this;
     }
 
     SushiproviderSettingTasklet setStatus(Status status) {

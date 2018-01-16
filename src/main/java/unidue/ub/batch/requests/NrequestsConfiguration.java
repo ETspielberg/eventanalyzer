@@ -7,7 +7,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import unidue.ub.batch.DataWriter;
@@ -16,15 +15,6 @@ import unidue.ub.media.monographs.Manifestation;
 
 @Configuration
 public class NrequestsConfiguration {
-
-    @Value("${ub.statistics.settings.url}")
-    String settingsUrl;
-
-    @Value("${ub.statistics.getter.url}")
-    String getterUrl;
-
-    @Value("${ub.statistics.data.url}")
-    String dataUrl;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -35,9 +25,7 @@ public class NrequestsConfiguration {
     @Bean
     @StepScope
     public NrequestsReader nrequestsReader() {
-        NrequestsReader reader = new NrequestsReader();
-        reader.setGetterUrl(getterUrl);
-        return reader;
+        return new NrequestsReader();
     }
 
     @Bean
@@ -50,7 +38,6 @@ public class NrequestsConfiguration {
     @StepScope
     public DataWriter writer() {
         DataWriter writer = new DataWriter();
-        writer.setDataUrl(dataUrl);
         return writer;
     }
 

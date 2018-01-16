@@ -11,9 +11,8 @@ import java.io.IOException;
 
 public class LoggingTasklet implements Tasklet {
 
-    private String message;
-
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private String message;
 
     public String getMessage() {
         return message;

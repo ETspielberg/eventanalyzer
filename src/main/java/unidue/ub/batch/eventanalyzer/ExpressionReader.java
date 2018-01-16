@@ -10,7 +10,9 @@ import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.List;
 
 public class ExpressionReader implements ItemReader<Expression> {
 
@@ -19,10 +21,11 @@ public class ExpressionReader implements ItemReader<Expression> {
     private Enumeration<Expression> expressionEnumeration;
 
     private ManifestationReader manifestationReader;
-
-    ExpressionReader() { noExpressionsFound = true;}
-
     private Stockcontrol stockcontrol;
+
+    ExpressionReader() {
+        noExpressionsFound = true;
+    }
 
     public ExpressionReader(ManifestationReader manifestationReader) {
         noExpressionsFound = true;
@@ -40,11 +43,11 @@ public class ExpressionReader implements ItemReader<Expression> {
     }
 
     private void collectManifestation() throws URISyntaxException {
-        Hashtable<String,Expression> expressionData = new Hashtable<>();
+        Hashtable<String, Expression> expressionData = new Hashtable<>();
         manifestationReader.setStockcontrol(stockcontrol);
         manifestationReader.collectManifestation();
-        List<Manifestation> manifestations  = manifestationReader.getManifestations();
-        if(manifestations.size() != 0)  {
+        List<Manifestation> manifestations = manifestationReader.getManifestations();
+        if (manifestations.size() != 0) {
             for (Manifestation manifestation : manifestations) {
                 if (expressionData.containsKey(manifestation.getShelfmarkBase())) {
                     expressionData.get(manifestation.getShelfmarkBase()).addManifestation(manifestation);

@@ -10,7 +10,6 @@ import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import unidue.ub.batch.DataWriter;
@@ -21,12 +20,6 @@ import unidue.ub.settings.fachref.Status;
 @Configuration
 @EnableBatchProcessing
 public class SushiConfiguration {
-
-    @Value("${ub.statistics.settings.url}")
-    String settingsUrl;
-
-    @Value("${ub.statistics.data.url}")
-    String dataUrl;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -43,33 +36,25 @@ public class SushiConfiguration {
     @Bean
     @StepScope
     public DataWriter writer() {
-        DataWriter writer = new DataWriter();
-        writer.setDataUrl(dataUrl);
-        return writer;
+        return new DataWriter();
     }
 
     @Bean
     @StepScope
     public SushiproviderInitializerTasklet sushiproviderIntializer() {
-        SushiproviderInitializerTasklet sushiproviderInitializerTasklet = new SushiproviderInitializerTasklet();
-        sushiproviderInitializerTasklet.setSettingsUrl(settingsUrl);
-        return sushiproviderInitializerTasklet;
+        return new SushiproviderInitializerTasklet();
     }
 
     @Bean
     @StepScope
     public SushiproviderSettingTasklet sushiStartingTasklet() {
-        SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
-        tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus(Status.RUNNING);
+        return new SushiproviderSettingTasklet().setStatus(Status.RUNNING);
     }
 
     @Bean
     @StepScope
     public SushiproviderSettingTasklet sushiFinishedTasklet() {
-        SushiproviderSettingTasklet tasklet = new SushiproviderSettingTasklet();
-        tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus(Status.FINISHED);
+        return new SushiproviderSettingTasklet().setStatus(Status.FINISHED);
     }
 
     @Bean
@@ -80,8 +65,8 @@ public class SushiConfiguration {
     @Bean
     public Step sushiproviderSetStart() {
         return stepBuilderFactory.get("startStep")
-        .tasklet(sushiStartingTasklet())
-        .build();
+                .tasklet(sushiStartingTasklet())
+                .build();
     }
 
     @Bean
@@ -109,7 +94,7 @@ public class SushiConfiguration {
 
     @Bean
     public Flow sushiFlow() {
-        FlowBuilder<Flow> flowBuilder  = new FlowBuilder<>("manifestationFlow");
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("manifestationFlow");
         return flowBuilder
                 .start(sushiproviderSetStart())
                 .next(step())

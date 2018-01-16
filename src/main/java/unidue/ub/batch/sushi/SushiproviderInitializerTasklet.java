@@ -18,34 +18,26 @@ import unidue.ub.settings.fachref.Sushiprovider;
 @StepScope
 public class SushiproviderInitializerTasklet implements Tasklet {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
-
-    private String settingsUrl;
-
     @Value("#{jobParameters['sushiprovider.identifier'] ?: 'newProvider'}")
     public String identifier;
-
-    public SushiproviderInitializerTasklet setSettingsUrl(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-        return this;
-    }
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     public RepeatStatus execute(StepContribution contribution,
-                                ChunkContext chunkContext)  throws Exception {
+                                ChunkContext chunkContext) throws Exception {
         Sushiprovider sushiprovider = getSushiprovider();
         ExecutionContext stepContext = chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext();
-        stepContext.put("sushiprovider",sushiprovider);
+        stepContext.put("sushiprovider", sushiprovider);
         log.info("stored sushiprovider " + identifier + " in job context");
         return RepeatStatus.FINISHED;
     }
 
     private Sushiprovider getSushiprovider() {
-        log.info("retrieving sushiprovider with identifier " + identifier + " from " + settingsUrl + "/sushiprovider/" + identifier);
+        log.info("retrieving sushiprovider with identifier " + identifier + " from " + "/api/settings/sushiprovider/" + identifier);
         Sushiprovider sushiprovider = new Sushiprovider();
         sushiprovider.setName("newProvider");
         try {
             ResponseEntity<Sushiprovider> response = new RestTemplate().getForEntity(
-                    settingsUrl + "/sushiprovider/" + identifier,
+                    "/api/settings/sushiprovider/" + identifier,
                     Sushiprovider.class,
                     0);
             if (response.getStatusCodeValue() == 200)
@@ -53,8 +45,6 @@ public class SushiproviderInitializerTasklet implements Tasklet {
         } catch (Exception e) {
             log.info("could not retrieve sushi provider");
         }
-
-
         return sushiprovider;
     }
 

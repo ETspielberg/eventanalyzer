@@ -33,24 +33,24 @@ public class JobLauncherController {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("stockcontrol.identifier", identifier);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
-        jobLauncher.run(eventanalyzerJob,jobParameters);
+        jobLauncher.run(eventanalyzerJob, jobParameters);
     }
 
     @RequestMapping("/sushi")
     public void runSushiClient(String identifier, String type, String mode) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("sushiprovider.identifier", identifier)
-        .addString("sushi.type" , type)
-        .addString("sushi.mode" , mode);
+                .addString("sushi.type", type)
+                .addString("sushi.mode", mode);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
-        jobLauncher.run(sushiJob,jobParameters);
+        jobLauncher.run(sushiJob, jobParameters);
     }
 
     @RequestMapping("/nrequests")
     public void runNrequestsCollector() throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
-        jobParametersBuilder.addDate("date",new Date());
+        jobParametersBuilder.addDate("date", new Date());
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
-        jobLauncher.run(nrequestsJob,jobParameters);
+        jobLauncher.run(nrequestsJob, jobParameters);
     }
 }

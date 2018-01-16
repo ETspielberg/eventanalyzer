@@ -11,7 +11,6 @@ import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -25,15 +24,6 @@ import unidue.ub.settings.fachref.Status;
 @Configuration
 @EnableBatchProcessing
 public class EventanalyzerConfiguration {
-
-    @Value("${ub.statistics.settings.url}")
-    String settingsUrl;
-
-    @Value("${ub.statistics.getter.url}")
-    String gettersUrl;
-
-    @Value("${ub.statistics.data.url}")
-    String dataUrl;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -59,36 +49,26 @@ public class EventanalyzerConfiguration {
     @Bean
     @StepScope
     public ManifestationReader manifestationReader() {
-        ManifestationReader reader = new ManifestationReader();
-        reader.setNotationTemplate(notationTemplate())
-                .setRestTemplate(getterTemplate())
-                .setGetterUrl(gettersUrl)
-                .setSettingsUrl(settingsUrl);
-        return reader;
+        return new ManifestationReader();
     }
 
     @Bean
     @StepScope
     public ExpressionReader expressionReader(ManifestationReader manifestationReader) {
-        ExpressionReader reader = new ExpressionReader(manifestationReader);
-        return reader;
+        return new ExpressionReader(manifestationReader);
 
     }
 
     @Bean
     @StepScope
     public StockcontrolSettingTasklet startingTasklet() {
-        StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
-        tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus(Status.RUNNING);
+        return new StockcontrolSettingTasklet().setStatus(Status.RUNNING);
     }
 
     @Bean
     @StepScope
     public StockcontrolSettingTasklet finishedTasklet() {
-        StockcontrolSettingTasklet tasklet = new StockcontrolSettingTasklet();
-        tasklet.setSettingsUrl(settingsUrl);
-        return tasklet.setStatus(Status.FINISHED);
+        return new StockcontrolSettingTasklet().setStatus(Status.FINISHED);
     }
 
     @Bean
@@ -111,17 +91,13 @@ public class EventanalyzerConfiguration {
     @Bean
     @StepScope
     public DataWriter writer() {
-        DataWriter writer = new DataWriter();
-        writer.setDataUrl(dataUrl);
-        return writer;
+        return new DataWriter();
     }
 
     @StepScope
     @Bean
     public StockcontrolInitializerTasklet stockcontrolInitializer() {
-        StockcontrolInitializerTasklet stockcontrolInitializer = new StockcontrolInitializerTasklet();
-        stockcontrolInitializer.setSettingsUrl(settingsUrl);
-        return stockcontrolInitializer;
+        return new StockcontrolInitializerTasklet();
     }
 
     @Bean
@@ -147,16 +123,18 @@ public class EventanalyzerConfiguration {
                 .build();
     }
 
-    @Bean Flow manifestationFlow() {
-        FlowBuilder<Flow> flowBuilder  = new FlowBuilder<>("manifestationFlow");
+    @Bean
+    Flow manifestationFlow() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("manifestationFlow");
         return flowBuilder
-        .start(step1())
+                .start(step1())
                 .next(step2Manifestation())
                 .next(step3()).end();
     }
 
-    @Bean Flow expressionFlow() {
-        FlowBuilder<Flow> flowBuilder  = new FlowBuilder<>("expressionFlow");
+    @Bean
+    Flow expressionFlow() {
+        FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("expressionFlow");
         return flowBuilder
                 .start(step1())
                 .next(step2Expression())

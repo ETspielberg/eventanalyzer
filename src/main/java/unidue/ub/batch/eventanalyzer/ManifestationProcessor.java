@@ -7,32 +7,30 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Item;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ManifestationProcessor implements ItemProcessor<Manifestation,Eventanalysis> {
+public class ManifestationProcessor implements ItemProcessor<Manifestation, Eventanalysis> {
 
     private static final Logger log = LoggerFactory.getLogger(ManifestationProcessor.class);
 
     private Stockcontrol stockcontrol;
 
-    @Value("${ub.statistics.settings.url}")
-    private String settingsUrl;
-
-    public ManifestationProcessor() { }
+    public ManifestationProcessor() {
+    }
 
     @Override
     public Eventanalysis process(final Manifestation manifestation) throws Exception {
         log.info("analyzing manifestation " + manifestation.getTitleID() + " and shelfmark " + manifestation.getShelfmark());
 
         List<Event> events = new ArrayList<>();
-        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
+        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(), stockcontrol.getMaterials());
         for (Item item : manifestation.getItems()) {
             if (itemFilter.matches(item)) {
                 List<Event> itemEvents = item.getEvents();
@@ -43,7 +41,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
                 }
             }
         }
-        Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events, stockcontrol);
+        Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
         if (analysis.getProposedDeletion() > 0 || analysis.getProposedPurchase() > 0) {
             analysis.setTitleId(manifestation.getTitleID());
             analysis.setShelfmark(manifestation.getShelfmark());
@@ -58,6 +56,6 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation,Event
         JobExecution jobExecution = stepExecution.getJobExecution();
         ExecutionContext jobContext = jobExecution.getExecutionContext();
         this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
-        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader" );
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader");
     }
 }

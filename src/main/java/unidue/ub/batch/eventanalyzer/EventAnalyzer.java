@@ -29,25 +29,15 @@ import java.util.*;
  */
 public class EventAnalyzer {
 
-    EventAnalyzer(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-    }
-
     private static final Logger log = Logger.getLogger(EventAnalyzer.class);
-
-    private String settingsUrl;
-
-    private String relevantUserCategories;
-
     private String irrelevantUserCategories;
-
     private String relevantItemCategories;
-
     private UsageCounters usagecounter = new UsageCounters();
-
     private Map<String, String> userGroups;
-
     private Map<String, String> itemGroups;
+
+    EventAnalyzer() {
+    }
 
     /**
      * Calculates the loan and request parameters for a given List of Events
@@ -140,34 +130,38 @@ public class EventAnalyzer {
                     eventDate = startDate;
                 int days = (int) ChronoUnit.DAYS.between(eventDate, endDate) + 1;
 
-                // analyze loan events
-                if (event.getType().equals("loan")) {
-                    if (event.getBorrowerStatus() == null) {
-                        log.info("no Borrower given");
-                        usagecounter.daysLoaned += days;
-                    } else {
-                        if (irrelevantUserCategories.contains(event.getBorrowerStatus()))
-                            usagecounter.daysLoaned -= days;
-                        else
+                switch (event.getType()) {
+                    // analyze loan events
+                    case "loan": {
+                        if (event.getBorrowerStatus() == null) {
+                            log.info("no Borrower given");
                             usagecounter.daysLoaned += days;
+                        } else {
+                            if (irrelevantUserCategories.contains(event.getBorrowerStatus()))
+                                usagecounter.daysLoaned -= days;
+                            else
+                                usagecounter.daysLoaned += days;
+                        }
+                        break;
                     }
-
-                    // analyze stock events
-                } else if (event.getType().equals("inventory")) {
-                    if (event.getItem() != null) {
-                        if (event.getItem().getItemStatus() != null) {
-                            if (relevantItemCategories.contains(event.getItem().getItemStatus()))
+                    case "inventory": {
+                        // analyze stock events
+                        if (event.getItem() != null) {
+                            if (event.getItem().getItemStatus() != null) {
+                                if (relevantItemCategories.contains(event.getItem().getItemStatus()))
+                                    usagecounter.daysStockLendable += days;
+                            } else
                                 usagecounter.daysStockLendable += days;
                         } else
                             usagecounter.daysStockLendable += days;
-                    } else
-                        usagecounter.daysStockLendable += days;
-
-                    // analyze request events
-                } else if (event.getType().equals("request")) {
-                    if (eventDate.isAfter(startDateRequests)) {
-                        analysis.increaseNumberRequests();
-                        usagecounter.daysRequested += days;
+                        break;
+                    }
+                    case "request": {
+                        // analyze request events
+                        if (eventDate.isAfter(startDateRequests)) {
+                            analysis.increaseNumberRequests();
+                            usagecounter.daysRequested += days;
+                        }
                     }
                 }
             }
@@ -177,7 +171,6 @@ public class EventAnalyzer {
             analysis.setMeanRelativeLoan(usagecounter.getMeanRelativeLoan());
             analysis.setLastStock(usagecounter.getStock());
             analysis.setLastStockLendable(usagecounter.getStockLendable());
-
 
 
             double staticBuffer = stockcontrol.getStaticBuffer();
@@ -222,7 +215,7 @@ public class EventAnalyzer {
             if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= stockcontrol.getMinimumDaysOfRequest()) {
                 analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
             }
-             analysis.setStatus("proposed");
+            analysis.setStatus("proposed");
         } else {
             analysis.setStatus("noEvents");
         }
@@ -241,60 +234,73 @@ public class EventAnalyzer {
     }
 
     private void updateItemCounter(Event event) {
-        if (event.getType().equals("loan")) {
-            if (event.getBorrowerStatus() != null) {
-                if (userGroups.get("student").contains(event.getBorrowerStatus()))
-                    usagecounter.studentLoans++;
-                else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
-                    usagecounter.externLoans++;
-                else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
-                    usagecounter.internLoans++;
-                else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
-                    usagecounter.happLoans++;
-                else
+        switch (event.getType()) {
+            case "loan": {
+                if (event.getBorrowerStatus() != null) {
+                    if (userGroups.get("student").contains(event.getBorrowerStatus()))
+                        usagecounter.studentLoans++;
+                    else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
+                        usagecounter.externLoans++;
+                    else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
+                        usagecounter.internLoans++;
+                    else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
+                        usagecounter.happLoans++;
+                    else
+                        usagecounter.elseLoans++;
+                } else
                     usagecounter.elseLoans++;
-            } else
-                usagecounter.elseLoans++;
-        } else if (event.getType().equals("return")) {
-            if (event.getBorrowerStatus() != null) {
-                if (userGroups.get("student").contains(event.getBorrowerStatus()))
-                    usagecounter.studentLoans--;
-                else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
-                    usagecounter.externLoans--;
-                else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
-                    usagecounter.internLoans--;
-                else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
-                    usagecounter.happLoans--;
-                else
+                break;
+            }
+            case "return": {
+                if (event.getBorrowerStatus() != null) {
+                    if (userGroups.get("student").contains(event.getBorrowerStatus()))
+                        usagecounter.studentLoans--;
+                    else if (userGroups.get("extern").contains(event.getBorrowerStatus()))
+                        usagecounter.externLoans--;
+                    else if (userGroups.get("intern").contains(event.getBorrowerStatus()))
+                        usagecounter.internLoans--;
+                    else if (userGroups.get("happ").contains(event.getBorrowerStatus()))
+                        usagecounter.happLoans--;
+                    else
+                        usagecounter.elseLoans--;
+                } else
                     usagecounter.elseLoans--;
-            } else
-                usagecounter.elseLoans--;
-        } else if (event.getType().equals("inventory")) {
-            usagecounter.stock++;
-            if (event.getItem() != null)
-                if (event.getItem().getItemStatus() != null)
-                    if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
-                        usagecounter.stockLendable++;
-        } else if (event.getType().equals("deletion")) {
-            usagecounter.stock--;
-            usagecounter.stockDeleted++;
-            if (event.getItem() != null)
-                if (event.getItem().getItemStatus() != null)
-                    if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
-                        usagecounter.stockLendable--;
-        } else if (event.getType().equals("request")) {
-            usagecounter.requests++;
-        } else if (event.getType().equals("hold")) {
-            usagecounter.requests--;
-        } else if (event.getType().equals("cald")) {
-            usagecounter.calds++;
+                break;
+            }
+            case "inventory": {
+                usagecounter.stock++;
+                if (event.getItem() != null)
+                    if (event.getItem().getItemStatus() != null)
+                        if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
+                            usagecounter.stockLendable++;
+                break;
+            }
+            case "deletion": {
+                usagecounter.stock--;
+                usagecounter.stockDeleted++;
+                if (event.getItem() != null)
+                    if (event.getItem().getItemStatus() != null)
+                        if (itemGroups.get("lendable").contains(event.getItem().getItemStatus()))
+                            usagecounter.stockLendable--;
+                break;
+            }
+            case "request": {
+                usagecounter.requests++;
+                break;
+            }
+            case "hold": {
+                usagecounter.requests--;
+                break;
+            }
+            case "cald": {
+                usagecounter.calds++;
+            }
         }
     }
 
     private void prepareUserCategories() throws URISyntaxException {
-        relevantUserCategories = "";
         irrelevantUserCategories = "";
-        Traverson traverson = new Traverson(new URI(settingsUrl + "/userGroup"), MediaTypes.HAL_JSON);
+        Traverson traverson = new Traverson(new URI("/api/settings/userGroup"), MediaTypes.HAL_JSON);
         Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
         ParameterizedTypeReference<Resources<UserGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<UserGroup>>() {
         };
@@ -302,9 +308,7 @@ public class EventAnalyzer {
         userGroups = new HashMap<>();
         for (UserGroup userGroup : resUsers.getContent()) {
             userGroups.put(userGroup.getName(), userGroup.getUserCategoriesAsString());
-            if (userGroup.isRelevantForAnalysis())
-                relevantUserCategories += userGroup.getUserCategoriesAsString() + " ";
-            else
+            if (!userGroup.isRelevantForAnalysis())
                 irrelevantUserCategories += userGroup.getUserCategoriesAsString() + " ";
         }
     }
@@ -312,7 +316,7 @@ public class EventAnalyzer {
     private void prepareItemCategories() throws URISyntaxException {
         relevantItemCategories = "";
         itemGroups = new HashMap<>();
-        Traverson traverson = new Traverson(new URI(settingsUrl + "/itemGroup"), MediaTypes.HAL_JSON);
+        Traverson traverson = new Traverson(new URI("/api/settings/itemGroup"), MediaTypes.HAL_JSON);
         Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
         ParameterizedTypeReference<Resources<ItemGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<ItemGroup>>() {
         };

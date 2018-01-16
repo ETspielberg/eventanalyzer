@@ -12,7 +12,6 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.client.Traverson;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
@@ -26,44 +25,16 @@ import java.util.List;
 
 public class ManifestationReader implements ItemReader<Manifestation> {
 
-    private RestTemplate restTemplate;
-
-    private RestTemplate notationTemplate;
-
     private static final Logger log = LoggerFactory.getLogger(ManifestationReader.class);
 
-    private int nextManifestationIndex = 0;
+    private int nextManifestationIndex;
 
     private List<Manifestation> manifestationData;
-
-    private String settingsUrl;
-
-    private String getterUrl;
 
     private Stockcontrol stockcontrol;
 
     public ManifestationReader() {
         nextManifestationIndex = 0;
-    }
-
-    public ManifestationReader setGetterUrl(String getterUrl) {
-        this.getterUrl = getterUrl;
-        return this;
-    }
-
-    public ManifestationReader setSettingsUrl(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-        return this;
-    }
-
-    public ManifestationReader setRestTemplate(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-        return this;
-    }
-
-    public ManifestationReader setNotationTemplate(RestTemplate notationTemplate) {
-        this.notationTemplate = notationTemplate;
-        return this;
     }
 
     @Override
@@ -84,9 +55,10 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         List<String> notations = new ArrayList<>();
         String[] notationGroupStrings;
         if (stockcontrol.getSystemCode().isEmpty()) {
-            Traverson traverson = new Traverson(new URI(settingsUrl + "/notation/search/getNotationListForNotationgroup?notationgroupName=" + stockcontrol.getSubjectID()), MediaTypes.HAL_JSON);
+            Traverson traverson = new Traverson(new URI("/api/settings/notation/search/getNotationListForNotationgroup?notationgroupName=" + stockcontrol.getSubjectID()), MediaTypes.HAL_JSON);
             Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
-            ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {};
+            ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {
+            };
             Resources<Notation> resUsers = tb.toObject(typeRefDevices);
             Collection<Notation> foundNotations = resUsers.getContent();
             for (Notation notationFound : foundNotations) {
@@ -104,9 +76,10 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                 if (notationGroupString.contains("-")) {
                     String startNotation = notationGroupString.substring(0, notationGroupString.indexOf("-"));
                     String endNotation = notationGroupString.substring(notationGroupString.indexOf("-") + 1, notationGroupString.length());
-                    Traverson traverson = new Traverson(new URI(settingsUrl + "/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
+                    Traverson traverson = new Traverson(new URI("/api/settings/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
                     Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
-                    ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {};
+                    ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {
+                    };
                     Resources<Notation> resUsers = tb.toObject(typeRefDevices);
                     Collection<Notation> foundNotations = resUsers.getContent();
                     for (Notation notationFound : foundNotations) {
@@ -120,15 +93,15 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         }
         manifestationData = new ArrayList<>();
         for (String notation : notations) {
-            ResponseEntity<Manifestation[]> manifestations = restTemplate.getForEntity(
-                    getterUrl + "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
+            ResponseEntity<Manifestation[]> manifestations = new RestTemplate().getForEntity(
+                    "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
                 if (titleID != null) {
-                    ResponseEntity<Manifestation> fullManifestation = restTemplate.getForEntity(
-                            getterUrl + "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
+                    ResponseEntity<Manifestation> fullManifestation = new RestTemplate().getForEntity(
+                            "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
                             Manifestation.class
                     );
                     manifestationData.add(fullManifestation.getBody());
@@ -146,13 +119,15 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         return (this.manifestationData == null);
     }
 
-    List<Manifestation> getManifestations() { return manifestationData; }
+    List<Manifestation> getManifestations() {
+        return manifestationData;
+    }
 
     @BeforeStep
     public void retrieveStockcontrol(StepExecution stepExecution) {
         JobExecution jobExecution = stepExecution.getJobExecution();
         ExecutionContext jobContext = jobExecution.getExecutionContext();
         this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
-        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader" );
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by manifestation reader");
     }
 }

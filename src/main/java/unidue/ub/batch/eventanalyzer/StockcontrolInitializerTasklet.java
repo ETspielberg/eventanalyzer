@@ -18,23 +18,15 @@ import unidue.ub.settings.fachref.Stockcontrol;
 @StepScope
 public class StockcontrolInitializerTasklet implements Tasklet {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
-
-    private String settingsUrl;
-
     @Value("#{jobParameters['stockcontrol.identifier'] ?: 'newProfile'}")
     public String identifier;
-
-    public StockcontrolInitializerTasklet setSettingsUrl(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-        return this;
-    }
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
     public RepeatStatus execute(StepContribution contribution,
-                                ChunkContext chunkContext)  throws Exception {
+                                ChunkContext chunkContext) {
         Stockcontrol stockcontrol = getStockcontrol();
         ExecutionContext stepContext = chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext();
-        stepContext.put("stockcontrol",stockcontrol);
+        stepContext.put("stockcontrol", stockcontrol);
         log.info("stored stockcontrol " + identifier + " in job context");
         return RepeatStatus.FINISHED;
     }
@@ -42,9 +34,9 @@ public class StockcontrolInitializerTasklet implements Tasklet {
     private Stockcontrol getStockcontrol() {
         log.info("retrieving stockcontrol for identifier " + identifier);
         ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
-                settingsUrl + "/stockcontrol/" + identifier ,
+                "/api/settings/stockcontrol/" + identifier,
                 Stockcontrol.class,
-                0        );
+                0);
         Stockcontrol stockcontrol = new Stockcontrol();
         stockcontrol.setGroupedAnalysis(false);
         if (response.getStatusCodeValue() == 200)

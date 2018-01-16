@@ -1,8 +1,6 @@
 package unidue.ub.batch.sushi;
 
 import org.jdom2.JDOMException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
@@ -14,10 +12,9 @@ import unidue.ub.media.analysis.Counter;
 import unidue.ub.media.tools.CounterTools;
 import unidue.ub.settings.fachref.Sushiprovider;
 
-import javax.xml.soap.*;
-import java.io.ByteArrayOutputStream;
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,21 +22,17 @@ import java.util.List;
 @StepScope
 public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
 
-    SushiCounterReader( ) {}
-
     private Sushiprovider sushiprovider;
-
     @Value("#{jobParameters['sushi.mode'] ?: 'update'}")
     private String mode;
-
     @Value("#{jobParameters['sushi.type'] ?: 'JR1'}")
     private String type;
-
     private SOAPMessage soapMessage;
-
     private List<Counter> counters;
-
     private boolean collected = false;
+
+    SushiCounterReader() {
+    }
 
     @Override
     public Counter read() throws JDOMException, SOAPException, IOException {
@@ -54,20 +47,20 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         SushiClient sushiClient = new SushiClient();
         sushiClient.setProvider(sushiprovider);
         sushiClient.setReportType(type);
-        LocalDateTime TODAY  = LocalDateTime.now();
+        LocalDateTime TODAY = LocalDateTime.now();
         int timeshift;
         if (TODAY.getDayOfMonth() < 15)
             timeshift = 3;
         else
             timeshift = 2;
         switch (mode) {
-            case "update" : {
-                counters = executeSushiClient(sushiClient,timeshift);
+            case "update": {
+                counters = executeSushiClient(sushiClient, timeshift);
                 break;
             }
-            case "full" : {
+            case "full": {
                 while (TODAY.minusMonths(timeshift).getYear() >= 2000) {
-                    counters.addAll(executeSushiClient(sushiClient,timeshift));
+                    counters.addAll(executeSushiClient(sushiClient, timeshift));
                     timeshift += 1;
                 }
             }
@@ -78,11 +71,11 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private List<Counter> executeSushiClient(SushiClient sushiClient, int timeshift) throws JDOMException, SOAPException, IOException {
         List<Counter> countersFound = new ArrayList<>();
         sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
-        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1));
+        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1));
         soapMessage = sushiClient.getResponse();
         if (soapMessage != null)
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
-        return  countersFound;
+        return countersFound;
     }
 
     @BeforeStep

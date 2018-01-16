@@ -17,15 +17,11 @@ import unidue.ub.settings.fachref.Stockcontrol;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public class StockcontrolSettingTasklet implements Tasklet {
 
-    private String settingsUrl;
-
-    private Status status;
-
     private final static Logger log = LoggerFactory.getLogger(StockcontrolSettingTasklet.class);
+    private Status status;
 
     @Override
     public RepeatStatus execute(StepContribution contribution,
@@ -35,17 +31,12 @@ public class StockcontrolSettingTasklet implements Tasklet {
         stockcontrol.setLastrun(Timestamp.valueOf(LocalDateTime.now()));
         String json = new ObjectMapper().writeValueAsString(stockcontrol);
         HttpClient client = new HttpClient();
-        PostMethod post = new PostMethod(settingsUrl + "/stockcontrol");
+        PostMethod post = new PostMethod("/api/settings/stockcontrol");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
         post.setRequestEntity(entity);
         int responseStatus = client.executeMethod(post);
         log.info("set stockcontrol '" + stockcontrol.getIdentifier() + "' status to " + status + " with return status " + responseStatus);
         return RepeatStatus.FINISHED;
-    }
-
-    StockcontrolSettingTasklet setSettingsUrl(String settingsUrl) {
-        this.settingsUrl = settingsUrl;
-        return this;
     }
 
     StockcontrolSettingTasklet setStatus(Status status) {

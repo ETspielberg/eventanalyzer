@@ -20,7 +20,8 @@ public class FlowDecision implements JobExecutionDecider {
 
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
-    FlowDecision() { }
+    FlowDecision() {
+    }
 
     public FlowExecutionStatus decide(JobExecution jobExecution, StepExecution stepExecution) {
 
@@ -33,7 +34,7 @@ public class FlowDecision implements JobExecutionDecider {
             return FlowExecutionStatus.UNKNOWN;
         log.info("grouped analysis : " + stockcontrol.isGroupedAnalysis());
         if (stockcontrol.isGroupedAnalysis())
-                return FlowExecutionStatus.COMPLETED;
+            return FlowExecutionStatus.COMPLETED;
         else
             return FlowExecutionStatus.FAILED;
     }

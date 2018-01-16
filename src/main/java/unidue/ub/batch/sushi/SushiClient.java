@@ -1,12 +1,10 @@
 package unidue.ub.batch.sushi;
 
-import org.jdom2.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.*;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,26 +16,22 @@ public class SushiClient {
     private final static String namespaceSushi = "http://www.niso.org/schemas/sushi";
 
     private final static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    private int release = 4;
-
+    private final static Logger log = LoggerFactory.getLogger(SushiClient.class);
+    private int release;
     private LocalDateTime startTime;
-
     private LocalDateTime endTime;
-
     private String reportType;
-
     private Sushiprovider provider;
 
-    public SushiClient() {
-        LocalDateTime TODAY  = LocalDateTime.now();
+    SushiClient() {
+        LocalDateTime TODAY = LocalDateTime.now();
         int timeshift;
         if (TODAY.getDayOfMonth() < 15)
             timeshift = 3;
         else
             timeshift = 2;
         startTime = LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1);
-        endTime =  LocalDateTime.now().minusMonths(timeshift-1).withDayOfMonth(1).minusDays(1);
+        endTime = LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1);
         release = 4;
         reportType = "JR1";
     }
@@ -62,9 +56,7 @@ public class SushiClient {
         this.reportType = reportType;
     }
 
-    private final static Logger log = LoggerFactory.getLogger(SushiClient.class);
-
-    public SOAPMessage getResponse() throws IOException, SOAPException, JDOMException {
+    public SOAPMessage getResponse() throws SOAPException {
 
         SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
         SOAPConnection soapConnection = soapConnectionFactory.createConnection();
@@ -99,25 +91,25 @@ public class SushiClient {
         }
 
         SOAPElement customerReference = reportRequest.addChildElement("CustomerReference", "sus");
-        SOAPElement customerReferenceID = customerReference.addChildElement("ID","sus");
+        SOAPElement customerReferenceID = customerReference.addChildElement("ID", "sus");
         customerReferenceID.addTextNode(provider.getSushiCustomerReferenceID());
 
         if (!provider.getSushiCustomerReferenceName().isEmpty()) {
-            SOAPElement customerReferenceName = customerReference.addChildElement("Name","sus");
+            SOAPElement customerReferenceName = customerReference.addChildElement("Name", "sus");
             customerReferenceName.addTextNode(provider.getSushiCustomerReferenceName());
         }
 
-        SOAPElement reportDefinition = reportRequest.addChildElement("ReportDefinition","sus");
+        SOAPElement reportDefinition = reportRequest.addChildElement("ReportDefinition", "sus");
         reportDefinition.setAttribute("Release", String.valueOf(release));
         reportDefinition.setAttribute("Name", reportType);
 
-        SOAPElement filters = reportDefinition.addChildElement("Filters","sus");
-        SOAPElement usageDataRange = filters.addChildElement("UsageDateRange","sus");
+        SOAPElement filters = reportDefinition.addChildElement("Filters", "sus");
+        SOAPElement usageDataRange = filters.addChildElement("UsageDateRange", "sus");
 
-        SOAPElement begin = usageDataRange.addChildElement("Begin","sus");
+        SOAPElement begin = usageDataRange.addChildElement("Begin", "sus");
         begin.addTextNode(startTime.format(dtf));
 
-        SOAPElement end = usageDataRange.addChildElement("End","sus");
+        SOAPElement end = usageDataRange.addChildElement("End", "sus");
         end.setTextContent(endTime.format(dtf));
 
         MimeHeaders headers = soapMessage.getMimeHeaders();
@@ -125,7 +117,6 @@ public class SushiClient {
 
         soapMessage.saveChanges();
 
-        SOAPMessage soapResponse = soapConnection.call(soapMessage, provider.getSushiURL());
-        return soapResponse;
+        return soapConnection.call(soapMessage, provider.getSushiURL());
     }
 }

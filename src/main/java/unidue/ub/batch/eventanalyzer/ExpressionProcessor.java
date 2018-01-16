@@ -8,7 +8,6 @@ import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Expression;
@@ -19,14 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @StepScope
-public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalysis> {
+public class ExpressionProcessor implements ItemProcessor<Expression, Eventanalysis> {
 
     private static final Logger log = LoggerFactory.getLogger(ExpressionProcessor.class);
 
     private Stockcontrol stockcontrol;
-
-    @Value("${ub.statistics.settings.url}")
-    private String settingsUrl;
 
     public ExpressionProcessor() {
     }
@@ -36,7 +32,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
         log.info("analyzing expression  " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
 
         List<Event> events = new ArrayList<>();
-        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(),stockcontrol.getMaterials());
+        ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(), stockcontrol.getMaterials());
         for (Item item : expression.getItems()) {
             if (itemFilter.matches(item)) {
                 List<Event> itemEvents = item.getEvents();
@@ -47,7 +43,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
                 }
             }
         }
-        Eventanalysis analysis = new EventAnalyzer(settingsUrl).analyze(events,stockcontrol);
+        Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
         if (analysis.getProposedPurchase() > 0 || analysis.getProposedDeletion() > 0) {
             analysis.setTitleId(expression.getShelfmarkBase());
             analysis.setShelfmark(expression.getShelfmarkBase());
@@ -62,6 +58,6 @@ public class ExpressionProcessor implements ItemProcessor<Expression,Eventanalys
         JobExecution jobExecution = stepExecution.getJobExecution();
         ExecutionContext jobContext = jobExecution.getExecutionContext();
         this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
-        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by expression processor" );
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by expression processor");
     }
 }
