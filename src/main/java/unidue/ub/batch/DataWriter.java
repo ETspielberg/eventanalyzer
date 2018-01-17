@@ -22,7 +22,7 @@ public class DataWriter implements ItemWriter {
             String json = mapper.writeValueAsString(object);
             HttpClient client = new HttpClient();
             String objectType = object.getClass().getSimpleName();
-            PostMethod post = new PostMethod("/api/data/" + objectType.toLowerCase());
+            PostMethod post = new PostMethod("http://localhost:8082/api/data/" + objectType.toLowerCase());
             RequestEntity entity = new StringRequestEntity(json, "application/json", null);
             post.setRequestEntity(entity);
             int status = client.executeMethod(post);

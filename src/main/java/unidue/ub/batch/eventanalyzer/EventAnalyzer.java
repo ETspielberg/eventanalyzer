@@ -300,7 +300,7 @@ public class EventAnalyzer {
 
     private void prepareUserCategories() throws URISyntaxException {
         irrelevantUserCategories = "";
-        Traverson traverson = new Traverson(new URI("/api/settings/userGroup"), MediaTypes.HAL_JSON);
+        Traverson traverson = new Traverson(new URI("http://localhost:8082/api/settings/userGroup"), MediaTypes.HAL_JSON);
         Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
         ParameterizedTypeReference<Resources<UserGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<UserGroup>>() {
         };
@@ -316,7 +316,7 @@ public class EventAnalyzer {
     private void prepareItemCategories() throws URISyntaxException {
         relevantItemCategories = "";
         itemGroups = new HashMap<>();
-        Traverson traverson = new Traverson(new URI("/api/settings/itemGroup"), MediaTypes.HAL_JSON);
+        Traverson traverson = new Traverson(new URI("http://localhost:8082/api/settings/itemGroup"), MediaTypes.HAL_JSON);
         Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
         ParameterizedTypeReference<Resources<ItemGroup>> typeRefDevices = new ParameterizedTypeReference<Resources<ItemGroup>>() {
         };

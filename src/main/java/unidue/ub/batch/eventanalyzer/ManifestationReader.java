@@ -55,7 +55,7 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         List<String> notations = new ArrayList<>();
         String[] notationGroupStrings;
         if (stockcontrol.getSystemCode().isEmpty()) {
-            Traverson traverson = new Traverson(new URI("/api/settings/notation/search/getNotationListForNotationgroup?notationgroupName=" + stockcontrol.getSubjectID()), MediaTypes.HAL_JSON);
+            Traverson traverson = new Traverson(new URI("http://localhost:8082/api/settings/notation/search/getNotationListForNotationgroup?notationgroupName=" + stockcontrol.getSubjectID()), MediaTypes.HAL_JSON);
             Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
             ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {
             };
@@ -76,7 +76,7 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                 if (notationGroupString.contains("-")) {
                     String startNotation = notationGroupString.substring(0, notationGroupString.indexOf("-"));
                     String endNotation = notationGroupString.substring(notationGroupString.indexOf("-") + 1, notationGroupString.length());
-                    Traverson traverson = new Traverson(new URI("/api/settings/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
+                    Traverson traverson = new Traverson(new URI("http://localhost:8082/api/settings/notation/search/getNotationList?startNotation=" + startNotation + "&endNotation=" + endNotation), MediaTypes.HAL_JSON);
                     Traverson.TraversalBuilder tb = traverson.follow("$._links.self.href");
                     ParameterizedTypeReference<Resources<Notation>> typeRefDevices = new ParameterizedTypeReference<Resources<Notation>>() {
                     };
@@ -94,14 +94,14 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         manifestationData = new ArrayList<>();
         for (String notation : notations) {
             ResponseEntity<Manifestation[]> manifestations = new RestTemplate().getForEntity(
-                    "/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
+                    "http://localhost:8082/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
                 if (titleID != null) {
                     ResponseEntity<Manifestation> fullManifestation = new RestTemplate().getForEntity(
-                            "/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
+                            "http://localhost:8082/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
                             Manifestation.class
                     );
                     manifestationData.add(fullManifestation.getBody());

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.Date;
 
 @Controller
-@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/batch")
 public class JobLauncherController {
 

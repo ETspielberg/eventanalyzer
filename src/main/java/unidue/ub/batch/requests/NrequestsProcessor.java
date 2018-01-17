@@ -23,7 +23,7 @@ public class NrequestsProcessor implements ItemProcessor<Manifestation, Nrequest
     public Nrequests process(final Manifestation manifestation) throws Exception {
         log.info("transforming manifestation with id " + manifestation.getTitleID());
         ObjectMapper mapper = new ObjectMapper();
-        String lendable = mapper.readValue(new URL("/api/settings/itemGroup/lendable"), ItemGroup.class).getItemCategoriesAsString();
+        String lendable = mapper.readValue(new URL("http://localhost:8082/api/settings/itemGroup/lendable"), ItemGroup.class).getItemCategoriesAsString();
         return getNrequestsFor(manifestation, lendable);
     }
 }

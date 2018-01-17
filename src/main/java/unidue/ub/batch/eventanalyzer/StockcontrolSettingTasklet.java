@@ -31,7 +31,7 @@ public class StockcontrolSettingTasklet implements Tasklet {
         stockcontrol.setLastrun(Timestamp.valueOf(LocalDateTime.now()));
         String json = new ObjectMapper().writeValueAsString(stockcontrol);
         HttpClient client = new HttpClient();
-        PostMethod post = new PostMethod("/api/settings/stockcontrol");
+        PostMethod post = new PostMethod("http://localhost:8082/api/settings/stockcontrol");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);
         post.setRequestEntity(entity);
         int responseStatus = client.executeMethod(post);

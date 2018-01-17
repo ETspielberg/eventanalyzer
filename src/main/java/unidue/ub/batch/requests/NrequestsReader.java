@@ -31,7 +31,7 @@ public class NrequestsReader implements ItemReader<Manifestation> {
     private void collectManifestationsByOpenRequests() throws IOException {
         collected = true;
         ResponseEntity<Manifestation[]> response = new RestTemplate().getForEntity(
-                "/getter/manifestations?identifier=&exact=&mode=openRequests",
+                "http://localhost:8082/getter/manifestations?identifier=&exact=&mode=openRequests",
                 Manifestation[].class
         );
         log.info("found " + response.getBody().length + " manifestations with open requests");
@@ -43,7 +43,7 @@ public class NrequestsReader implements ItemReader<Manifestation> {
             double fraction = 100 * (double) i / (double) totalNumber;
             log.info("retrieving details for manifestation " + i + " (" + manifestation.getTitleID() + ") of " + totalNumber + "(" + fraction + " %)");
             ResponseEntity<Manifestation> responseInd = new RestTemplate().getForEntity(
-                    "/getter/buildActiveManifestation?identifier=" + manifestation.getTitleID(),
+                    "http://localhost:8082/getter/buildActiveManifestation?identifier=" + manifestation.getTitleID(),
                     Manifestation.class
             );
             manifestations.add(responseInd.getBody());

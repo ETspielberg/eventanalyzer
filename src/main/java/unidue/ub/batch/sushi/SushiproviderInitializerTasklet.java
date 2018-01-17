@@ -37,7 +37,7 @@ public class SushiproviderInitializerTasklet implements Tasklet {
         sushiprovider.setName("newProvider");
         try {
             ResponseEntity<Sushiprovider> response = new RestTemplate().getForEntity(
-                    "/api/settings/sushiprovider/" + identifier,
+                    "http://localhost:8082/api/settings/sushiprovider/" + identifier,
                     Sushiprovider.class,
                     0);
             if (response.getStatusCodeValue() == 200)

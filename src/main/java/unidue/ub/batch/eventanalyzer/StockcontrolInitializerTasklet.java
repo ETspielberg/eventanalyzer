@@ -34,7 +34,7 @@ public class StockcontrolInitializerTasklet implements Tasklet {
     private Stockcontrol getStockcontrol() {
         log.info("retrieving stockcontrol for identifier " + identifier);
         ResponseEntity<Stockcontrol> response = new RestTemplate().getForEntity(
-                "/api/settings/stockcontrol/" + identifier,
+                "http://localhost:8082/api/settings/stockcontrol/" + identifier,
                 Stockcontrol.class,
                 0);
         Stockcontrol stockcontrol = new Stockcontrol();
