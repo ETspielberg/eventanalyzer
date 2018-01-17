@@ -71,7 +71,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private List<Counter> executeSushiClient(SushiClient sushiClient, int timeshift) throws JDOMException, SOAPException, IOException {
         List<Counter> countersFound = new ArrayList<>();
         sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
-        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1));
+        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1));
         soapMessage = sushiClient.getResponse();
         if (soapMessage != null)
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
