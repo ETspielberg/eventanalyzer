@@ -48,6 +48,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         sushiClient.setProvider(sushiprovider);
         sushiClient.setReportType(type);
         LocalDateTime TODAY = LocalDateTime.now();
+        counters = new ArrayList<>();
         int timeshift;
         if (TODAY.getDayOfMonth() < 15)
             timeshift = 3;
@@ -59,7 +60,6 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 break;
             }
             case "full": {
-                counters = new ArrayList<>();
                 while (TODAY.minusMonths(timeshift).getYear() >= 2000) {
                     List<Counter> countersFound = executeSushiClient(sushiClient, timeshift);
                     if (countersFound != null)
