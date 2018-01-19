@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import unidue.ub.settings.fachref.Status;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 @Component
