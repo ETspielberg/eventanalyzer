@@ -1,5 +1,6 @@
 package unidue.ub.batch.sushi;
 
+import com.sun.xml.internal.ws.resources.SoapMessages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import unidue.ub.settings.fachref.Sushiprovider;
@@ -117,6 +118,9 @@ public class SushiClient {
 
         soapMessage.saveChanges();
 
-        return soapConnection.call(soapMessage, provider.getSushiURL());
+        SOAPMessage response = soapConnection.call(soapMessage, provider.getSushiURL());
+
+        soapConnection.close();
+        return response;
     }
 }
