@@ -60,7 +60,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 break;
             }
             case "full": {
-                while (TODAY.minusMonths(timeshift).getYear() >= 2000) {
+                while (TODAY.minusMonths(timeshift).getYear() >= 2015) {
                     List<Counter> countersFound = executeSushiClient(sushiClient, timeshift);
                     if (countersFound != null)
                         if (countersFound.size() != 0)

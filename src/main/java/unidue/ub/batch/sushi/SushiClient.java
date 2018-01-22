@@ -57,6 +57,7 @@ public class SushiClient {
     }
 
     public SOAPMessage getResponse() throws SOAPException {
+        log.info("requesting UsageData for " + this.provider + " for time range " + startTime.format(dtf) + " till " + endTime.format(dtf));
 
         SOAPConnectionFactory soapConnectionFactory = SOAPConnectionFactory.newInstance();
         SOAPConnection soapConnection = soapConnectionFactory.createConnection();
@@ -120,6 +121,8 @@ public class SushiClient {
         SOAPMessage response = soapConnection.call(soapMessage, provider.getSushiURL());
 
         soapConnection.close();
+        if (response == null)
+            log.info("SUSHI-server did not responde.");
         return response;
     }
 }
