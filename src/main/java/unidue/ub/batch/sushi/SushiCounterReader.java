@@ -66,11 +66,14 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
             case "full": {
                 while (TODAY.minusMonths(timeshift).getYear() >= 2015) {
                     List<Counter> countersFound = executeSushiClient(sushiClient, timeshift);
-                    if (countersFound != null)
+                    if (countersFound != null) {
                         if (countersFound.size() != 0) {
                             counters.addAll(countersFound);
                             log.info("added " + countersFound.size() + " counter statistics for timeshift " + timeshift);
                         }
+                    } else {
+                        log.warn("no counters from conversion!");
+                    }
                     timeshift += 1;
                 }
             }
@@ -85,6 +88,8 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         soapMessage = sushiClient.getResponse();
         if (soapMessage != null)
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
+        else
+            log.warn("no SOAP response!");
         return countersFound;
     }
 

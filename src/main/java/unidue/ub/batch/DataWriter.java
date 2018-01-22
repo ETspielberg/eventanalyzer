@@ -26,6 +26,7 @@ public class DataWriter implements ItemWriter {
             RequestEntity entity = new StringRequestEntity(json, "application/json", null);
             post.setRequestEntity(entity);
             int status = client.executeMethod(post);
+            if (status != 201)
             log.info("posted " + objectType + " to api/data/" + objectType.toLowerCase() + " with return status " + status);
         }
     }
