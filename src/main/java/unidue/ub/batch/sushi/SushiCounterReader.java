@@ -1,6 +1,8 @@
 package unidue.ub.batch.sushi;
 
 import org.jdom2.JDOMException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
@@ -30,6 +32,8 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private SOAPMessage soapMessage;
     private List<Counter> counters;
     private boolean collected = false;
+
+    private static Logger log = LoggerFactory.getLogger(SushiCounterReader.class);
 
     SushiCounterReader() {
     }
@@ -63,8 +67,10 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 while (TODAY.minusMonths(timeshift).getYear() >= 2015) {
                     List<Counter> countersFound = executeSushiClient(sushiClient, timeshift);
                     if (countersFound != null)
-                        if (countersFound.size() != 0)
+                        if (countersFound.size() != 0) {
                             counters.addAll(countersFound);
+                            log.info("added " + countersFound.size() + " counter statistics for timeshift " + timeshift);
+                        }
                     timeshift += 1;
                 }
             }
