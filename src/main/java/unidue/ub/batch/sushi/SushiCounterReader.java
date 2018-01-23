@@ -31,7 +31,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     @Value("#{jobParameters['sushi.type'] ?: 'JR1'}")
     private String type;
     @Value("#{jobParameters['sushi.year'] ?: 2017}")
-    private int year;
+    private Integer year;
     private SOAPMessage soapMessage;
     private List<Counter> counters;
     private boolean collected = false;
