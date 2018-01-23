@@ -30,7 +30,6 @@ public class SushiproviderSettingTasklet implements Tasklet {
         sushiprovider.setStatus(status);
         sushiprovider.setLastrun(Timestamp.valueOf(LocalDateTime.now()));
         String json = new ObjectMapper().writeValueAsString(sushiprovider);
-        log.info(json);
         HttpClient client = new HttpClient();
         PostMethod post = new PostMethod("http://localhost:8082/api/settings/sushiprovider");
         RequestEntity entity = new StringRequestEntity(json, "application/json", null);

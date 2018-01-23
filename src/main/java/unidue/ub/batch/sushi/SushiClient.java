@@ -122,7 +122,7 @@ public class SushiClient {
 
         soapConnection.close();
         if (response == null)
-            log.info("SUSHI-server did not responde.");
+            log.info("SUSHI-server did not respond.");
         return response;
     }
 }

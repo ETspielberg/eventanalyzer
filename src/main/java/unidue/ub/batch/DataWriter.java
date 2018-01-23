@@ -18,6 +18,7 @@ public class DataWriter implements ItemWriter {
 
     @Override
     public void write(List list) throws Exception {
+        int succesfullPosts = 0;
         for (Object object : list) {
             String json = mapper.writeValueAsString(object);
             HttpClient client = new HttpClient();
@@ -26,9 +27,12 @@ public class DataWriter implements ItemWriter {
             RequestEntity entity = new StringRequestEntity(json, "application/json", null);
             post.setRequestEntity(entity);
             int status = client.executeMethod(post);
-            if (status != 201)
-            log.info("posted " + objectType + " to api/data/" + objectType.toLowerCase() + " with return status " + status);
+
+            if (status == 201)
+                succesfullPosts++;
+            //else log.info("posted " + objectType + " to api/data/" + objectType.toLowerCase() + " with return status " + status);
         }
+        log.info("succesfully posted " + succesfullPosts + " of " + list.size() + " counter data.");
     }
 
 }

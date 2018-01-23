@@ -16,6 +16,7 @@ import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private String mode;
     @Value("#{jobParameters['sushi.type'] ?: 'JR1'}")
     private String type;
+    @Value("#{jobParameters['sushi.year'] ?: 2017}")
+    private int year;
     private SOAPMessage soapMessage;
     private List<Counter> counters;
     private boolean collected = false;
@@ -64,17 +67,18 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 break;
             }
             case "full": {
-                while (TODAY.minusMonths(timeshift).getYear() >= 2015) {
+                while (TODAY.minusMonths(timeshift).getYear() >= 2017) {
                     List<Counter> countersFound = executeSushiClient(sushiClient, timeshift);
-                    if (countersFound != null) {
-                        if (countersFound.size() != 0) {
-                            counters.addAll(countersFound);
-                            log.info("added " + countersFound.size() + " counter statistics for timeshift " + timeshift);
-                        }
-                    } else {
-                        log.warn("no counters from conversion!");
-                    }
+                    addCountersToList(countersFound);
                     timeshift += 1;
+                }
+            }
+            case "year": {
+                for (int i = 1; i<= 12; i++) {
+                    LocalDateTime start = LocalDateTime.of(year,i,1,0,0);
+                    LocalDateTime end = start.plusMonths(1).minusDays(1);
+                    List<Counter> countersFound = executeSushiClient(sushiClient,start,end);
+                    addCountersToList(countersFound);
                 }
             }
         }
@@ -82,14 +86,30 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         collected = true;
     }
 
+    private void addCountersToList(List<Counter> countersFound) {
+        if (countersFound != null) {
+            if (countersFound.size() != 0) {
+                counters.addAll(countersFound);
+                log.info("added " + countersFound.size() + " counter statistics.");
+            }
+        } else {
+            log.warn("no counters from conversion!");
+        }
+    }
+
     private List<Counter> executeSushiClient(SushiClient sushiClient, int timeshift) throws JDOMException, SOAPException, IOException {
+        LocalDateTime start = LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1);
+        LocalDateTime end = LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1);
+        return executeSushiClient(sushiClient, start, end);
+    }
+
+    private List<Counter> executeSushiClient(SushiClient sushiClient, LocalDateTime start, LocalDateTime end) throws JDOMException, SOAPException, IOException {
         List<Counter> countersFound = new ArrayList<>();
-        sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
-        sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1));
+        sushiClient.setStartTime(start);
+        sushiClient.setEndTime(end);
         soapMessage = sushiClient.getResponse();
         if (soapMessage != null) {
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
-            log.info(soapMessage.getSOAPBody().getValue());
         }
         else
             log.warn("no SOAP response!");
