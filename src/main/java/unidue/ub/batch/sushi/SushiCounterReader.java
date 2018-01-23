@@ -32,6 +32,8 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private String type;
     @Value("#{jobParameters['sushi.year'] ?: 2017}")
     private Integer year;
+    @Value("#{jobParameters['sushi.month'] ?: 1}")
+    private Integer month;
     private SOAPMessage soapMessage;
     private List<Counter> counters;
     private boolean collected = false;
@@ -81,6 +83,12 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                     addCountersToList(countersFound);
                 }
             }
+            case "month": {
+                    LocalDateTime start = LocalDateTime.of(year,month,1,0,0);
+                    LocalDateTime end = start.plusMonths(1).minusDays(1);
+                    List<Counter> countersFound = executeSushiClient(sushiClient,start,end);
+                    addCountersToList(countersFound);
+                }
         }
         log.info("collected " + counters.size() + " counters in total");
         collected = true;

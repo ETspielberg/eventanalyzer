@@ -36,12 +36,13 @@ public class JobLauncherController {
     }
 
     @RequestMapping("/sushi")
-    public void runSushiClient(String identifier, String type, String mode, Long year) throws Exception {
+    public void runSushiClient(String identifier, String type, String mode, Long year, Long month) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("sushiprovider.identifier", identifier)
                 .addString("sushi.type", type)
                 .addString("sushi.mode", mode)
-                .addLong("sushi.year", year);
+                .addLong("sushi.year", year)
+                .addLong("sushi.month", month);
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(sushiJob, jobParameters);
     }

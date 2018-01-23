@@ -79,7 +79,7 @@ public class SushiConfiguration {
     @Bean
     public Step step() {
         return stepBuilderFactory.get("step")
-                .<Manifestation, Eventanalysis>chunk(100)
+                .<Manifestation, Eventanalysis>chunk(10000)
                 .reader(reader())
                 .writer(writer())
                 .build();
