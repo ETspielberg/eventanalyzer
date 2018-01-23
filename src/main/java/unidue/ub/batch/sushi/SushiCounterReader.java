@@ -78,6 +78,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 }
             }
         }
+        log.info("collected " + counters.size() + " counters in total");
         collected = true;
     }
 
