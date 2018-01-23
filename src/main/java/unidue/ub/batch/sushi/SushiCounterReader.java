@@ -86,8 +86,10 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         sushiClient.setStartTime(LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1));
         sushiClient.setEndTime(LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1));
         soapMessage = sushiClient.getResponse();
-        if (soapMessage != null)
+        if (soapMessage != null) {
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
+            log.info(soapMessage.getSOAPBody().getValue());
+        }
         else
             log.warn("no SOAP response!");
         return countersFound;
