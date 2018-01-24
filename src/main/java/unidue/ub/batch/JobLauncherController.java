@@ -30,7 +30,7 @@ public class JobLauncherController {
     @RequestMapping("/eventanalyzer")
     public void runEventanalzer(String identifier) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
-        jobParametersBuilder.addString("stockcontrol.identifier", identifier);
+        jobParametersBuilder.addString("stockcontrol.identifier", identifier).addLong("time",System.currentTimeMillis()).toJobParameters();;
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(eventanalyzerJob, jobParameters);
     }
@@ -42,7 +42,8 @@ public class JobLauncherController {
                 .addString("sushi.type", type)
                 .addString("sushi.mode", mode)
                 .addLong("sushi.year", year)
-                .addLong("sushi.month", month);
+                .addLong("sushi.month", month)
+                .addLong("time",System.currentTimeMillis()).toJobParameters();
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(sushiJob, jobParameters);
     }
@@ -50,7 +51,7 @@ public class JobLauncherController {
     @RequestMapping("/nrequests")
     public void runNrequestsCollector() throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
-        jobParametersBuilder.addDate("date", new Date());
+        jobParametersBuilder.addDate("date", new Date()).addLong("time",System.currentTimeMillis()).toJobParameters();;
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(nrequestsJob, jobParameters);
     }
