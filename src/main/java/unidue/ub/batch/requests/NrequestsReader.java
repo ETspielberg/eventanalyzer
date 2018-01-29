@@ -42,11 +42,15 @@ public class NrequestsReader implements ItemReader<Manifestation> {
             Manifestation manifestation = foundManifestations[i];
             double fraction = 100 * (double) i / (double) totalNumber;
             log.info("retrieving details for manifestation " + i + " (" + manifestation.getTitleID() + ") of " + totalNumber + "(" + fraction + " %)");
-            ResponseEntity<Manifestation> responseInd = new RestTemplate().getForEntity(
-                    "http://localhost:8082/getter/buildActiveManifestation?identifier=" + manifestation.getTitleID(),
-                    Manifestation.class
-            );
-            manifestations.add(responseInd.getBody());
+            try {
+                ResponseEntity<Manifestation> responseInd = new RestTemplate().getForEntity(
+                        "http://localhost:8082/getter/buildActiveManifestation?identifier=" + manifestation.getTitleID(),
+                        Manifestation.class
+                );
+                manifestations.add(responseInd.getBody());
+            } catch (Exception e ) {
+                log.warn("could not read manifestation " + manifestation.getTitleID());
+            }
         }
     }
 }
