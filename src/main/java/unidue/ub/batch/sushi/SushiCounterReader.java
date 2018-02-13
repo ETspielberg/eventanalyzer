@@ -111,10 +111,12 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         soapMessage = sushiClient.getResponse();
         if (soapMessage != null) {
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
+            /*
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             soapMessage.writeTo(out);
             String strMsg = new String(out.toByteArray());
             log.info(strMsg);
+             */
         }
         else
             log.warn("no SOAP response!");
