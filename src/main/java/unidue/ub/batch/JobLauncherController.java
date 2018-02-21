@@ -5,6 +5,8 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,15 +30,16 @@ public class JobLauncherController {
     Job nrequestsJob;
 
     @RequestMapping("/eventanalyzer")
-    public void runEventanalzer(String identifier) throws Exception {
+    public ResponseEntity<?> runEventanalzer(String identifier) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("stockcontrol.identifier", identifier).addLong("time",System.currentTimeMillis()).toJobParameters();;
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(eventanalyzerJob, jobParameters);
+        return ResponseEntity.status(HttpStatus.FOUND).build();
     }
 
     @RequestMapping("/sushi")
-    public void runSushiClient(String identifier, String type, String mode, Long year, Long month) throws Exception {
+    public ResponseEntity<?> runSushiClient(String identifier, String type, String mode, Long year, Long month) throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addString("sushiprovider.identifier", identifier)
                 .addString("sushi.type", type)
@@ -46,13 +49,15 @@ public class JobLauncherController {
                 .addLong("time",System.currentTimeMillis()).toJobParameters();
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(sushiJob, jobParameters);
+        return ResponseEntity.status(HttpStatus.FOUND).build();
     }
 
     @RequestMapping("/nrequests")
-    public void runNrequestsCollector() throws Exception {
+    public ResponseEntity<?> runNrequestsCollector() throws Exception {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
         jobParametersBuilder.addDate("date", new Date()).addLong("time",System.currentTimeMillis()).toJobParameters();;
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         jobLauncher.run(nrequestsJob, jobParameters);
+        return ResponseEntity.status(HttpStatus.FOUND).build();
     }
 }

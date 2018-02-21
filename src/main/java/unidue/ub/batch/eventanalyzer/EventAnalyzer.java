@@ -182,20 +182,20 @@ public class EventAnalyzer {
                 ratio = analysis.getMeanRelativeLoan() / analysis.getMaxRelativeLoan();
 
             if (staticBuffer < 1 && variableBuffer < 1)
-                proposedDeletion = ((int) ((usagecounter.getStockLendable() - analysis.getMaxLoansAbs()) * (1
+                proposedDeletion = ((int) ((usagecounter.stock - analysis.getMaxLoansAbs()) * (1
                         - staticBuffer
                         - variableBuffer * ratio)));
             else if (staticBuffer >= 1 && variableBuffer < 1)
                 proposedDeletion = (
-                        (int) ((usagecounter.getStockLendable() - analysis.getMaxLoansAbs() - staticBuffer)
+                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs() - staticBuffer)
                                 * (1 - variableBuffer * ratio)));
             else if (staticBuffer >= 1 && variableBuffer >= 1)
                 proposedDeletion = (
-                        (int) ((usagecounter.getStockLendable() - analysis.getMaxLoansAbs() - staticBuffer)
+                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs() - staticBuffer)
                                 - variableBuffer * ratio));
             else if (staticBuffer < 1 && variableBuffer < 1)
                 proposedDeletion = (
-                        (int) ((usagecounter.getStockLendable() - analysis.getMaxLoansAbs()) * (1 - staticBuffer)
+                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs()) * (1 - staticBuffer)
                                 - variableBuffer * ratio));
 
             if (proposedDeletion < 0)
