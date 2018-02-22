@@ -106,10 +106,10 @@ public class EventanalyzerConfiguration {
         Flow flow = flowBuilder
                 .start(initStockcontrol())
                 .next(decision())
-                .on(decision().COMPLETED)
+                .on(decision().FAILED)
                 .to(manifestationFlow())
                 .from(decision())
-                .on(decision().FAILED)
+                .on(decision().COMPLETED)
                 .to(expressionFlow())
                 .from(decision())
                 .on(decision().UNKNOWN)
