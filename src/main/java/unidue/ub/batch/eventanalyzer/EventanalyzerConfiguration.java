@@ -73,6 +73,12 @@ public class EventanalyzerConfiguration {
 
     @Bean
     @StepScope
+    public EventanalysisSetterTasklet eventanalysisSetter() {
+        return new EventanalysisSetterTasklet().setStatus(Status.OBSOLETE);
+    }
+
+    @Bean
+    @StepScope
     public ManifestationProcessor manifestationProcessor() {
         return new ManifestationProcessor();
     }
@@ -105,6 +111,7 @@ public class EventanalyzerConfiguration {
         FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("eventanalyzerFlow");
         Flow flow = flowBuilder
                 .start(initStockcontrol())
+                .next(setOldAnalysisToObsolete())
                 .next(decision())
                 .on(decision().FAILED)
                 .to(manifestationFlow())
@@ -145,6 +152,13 @@ public class EventanalyzerConfiguration {
     public Step initStockcontrol() {
         return stepBuilderFactory.get("init")
                 .tasklet(stockcontrolInitializer())
+                .build();
+    }
+
+    @Bean
+    public Step setOldAnalysisToObsolete() {
+        return stepBuilderFactory.get("obsolete")
+                .tasklet(eventanalysisSetter())
                 .build();
     }
 
