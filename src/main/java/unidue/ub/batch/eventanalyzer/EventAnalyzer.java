@@ -138,7 +138,7 @@ public class EventAnalyzer {
                             usagecounter.daysLoaned += days;
                         } else {
                             if (irrelevantUserCategories.contains(event.getBorrowerStatus()))
-                                usagecounter.daysLoaned -= days;
+                                usagecounter.daysStockLendable -= days; //shouldn't it be daysStock reduced???
                             else
                                 usagecounter.daysLoaned += days;
                         }
@@ -169,7 +169,7 @@ public class EventAnalyzer {
             analysis.setSlope(slope);
             analysis.setDaysRequested(usagecounter.daysRequested);
             analysis.setMeanRelativeLoan(usagecounter.getMeanRelativeLoan());
-            analysis.setLastStock(usagecounter.getStock());
+            analysis.setLastStock(usagecounter.stock);
             analysis.setLastStockLendable(usagecounter.getStockLendable());
 
 

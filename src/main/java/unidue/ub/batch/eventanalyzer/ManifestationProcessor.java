@@ -7,13 +7,17 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
+import unidue.ub.media.blacklist.Ignored;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Item;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class ManifestationProcessor implements ItemProcessor<Manifestation, Eventanalysis> {
@@ -28,6 +32,17 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
     @Override
     public Eventanalysis process(final Manifestation manifestation) throws Exception {
         log.info("analyzing manifestation " + manifestation.getTitleID() + " and shelfmark " + manifestation.getShelfmark());
+        ResponseEntity<Ignored> response = new RestTemplate().getForEntity(
+                "http://localhost:8082/api/settings/stockcontrol/" + manifestation.getTitleID(),
+                Ignored.class,
+                0);
+        if (response.getStatusCode().value() == 200) {
+            Ignored ignored = response.getBody();
+            if (ignored.getExpire().after(new Date()) && ignored.getType().equals("eventanalysis")) {
+                log.info("manifestion blacklisted");
+                return null;
+            }
+        }
 
         List<Event> events = new ArrayList<>();
         ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(), stockcontrol.getMaterials());
@@ -42,13 +57,10 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
             }
         }
         Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
-        if (analysis.getProposedDeletion() > 0 || analysis.getProposedPurchase() > 0) {
             analysis.setTitleId(manifestation.getTitleID());
             analysis.setShelfmark(manifestation.getShelfmark());
-            analysis.setMab(manifestation.getBibliographicInformation().toString());
+            analysis.setMab(manifestation.getBibliographicInformation().getFullDescription());
             return analysis;
-        } else
-            return null;
     }
 
     @BeforeStep

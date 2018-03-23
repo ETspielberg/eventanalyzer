@@ -8,13 +8,17 @@ import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
+import unidue.ub.media.blacklist.Ignored;
 import unidue.ub.media.monographs.Event;
 import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Item;
 import unidue.ub.settings.fachref.Stockcontrol;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @StepScope
@@ -31,6 +35,17 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
     public Eventanalysis process(final Expression expression) throws Exception {
         log.info("analyzing expression  " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
 
+        ResponseEntity<Ignored> response = new RestTemplate().getForEntity(
+                "http://localhost:8082/api/settings/stockcontrol/" + expression.getShelfmarkBase(),
+                Ignored.class,
+                0);
+        if (response.getStatusCode().value() == 200) {
+            Ignored ignored = response.getBody();
+            if (ignored.getExpire().after(new Date()) && ignored.getType().equals("eventanalysis")) {
+                log.info("expression blacklisted");
+                return null;
+            }
+        }
         List<Event> events = new ArrayList<>();
         ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(), stockcontrol.getMaterials());
         for (Item item : expression.getItems()) {
