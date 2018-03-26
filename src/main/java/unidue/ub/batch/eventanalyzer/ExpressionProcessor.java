@@ -9,6 +9,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.blacklist.Ignored;
@@ -17,6 +18,7 @@ import unidue.ub.media.monographs.Expression;
 import unidue.ub.media.monographs.Item;
 import unidue.ub.settings.fachref.Stockcontrol;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,17 +37,33 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
     public Eventanalysis process(final Expression expression) throws Exception {
         log.info("analyzing expression  " + expression.getShelfmarkBase() + " and shelfmark " + expression.getShelfmarkBase());
 
-        ResponseEntity<Ignored> response = new RestTemplate().getForEntity(
-                "http://localhost:8082/api/settings/stockcontrol/" + expression.getShelfmarkBase(),
-                Ignored.class,
-                0);
-        if (response.getStatusCode().value() == 200) {
-            Ignored ignored = response.getBody();
-            if (ignored.getExpire().after(new Date()) && ignored.getType().equals("eventanalysis")) {
-                log.info("expression blacklisted");
-                return null;
+        try {
+            ResponseEntity<Ignored> response = new RestTemplate().getForEntity(
+                    "http://localhost:8082/api/settings/stockcontrol/" + expression.getShelfmarkBase(),
+                    Ignored.class,
+                    0);
+            if (response.getStatusCode().value() == 200) {
+                Ignored ignored = response.getBody();
+                if (ignored.getExpire().after(new Date()) && ignored.getType().equals("eventanalysis")) {
+                    log.info("expression blacklisted");
+                    return null;
+                }
             }
+            return calculateAnalysis(expression, stockcontrol);
+        } catch (HttpClientErrorException hcee) {
+            return calculateAnalysis(expression, stockcontrol);
         }
+    }
+
+    @BeforeStep
+    public void retrieveStockcontrol(StepExecution stepExecution) {
+        JobExecution jobExecution = stepExecution.getJobExecution();
+        ExecutionContext jobContext = jobExecution.getExecutionContext();
+        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
+        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by expression processor");
+    }
+
+    private Eventanalysis calculateAnalysis(Expression expression, Stockcontrol stockcontrol) throws URISyntaxException {
         List<Event> events = new ArrayList<>();
         ItemFilter itemFilter = new ItemFilter(stockcontrol.getCollections(), stockcontrol.getMaterials());
         for (Item item : expression.getItems()) {
@@ -59,20 +77,9 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
             }
         }
         Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
-        if (analysis.getProposedPurchase() > 0 || analysis.getProposedDeletion() > 0) {
-            analysis.setTitleId(expression.getShelfmarkBase());
-            analysis.setShelfmark(expression.getShelfmarkBase());
-            analysis.setMab(expression.getBibliographicInformation().toString());
-            return analysis;
-        } else
-            return null;
-    }
-
-    @BeforeStep
-    public void retrieveStockcontrol(StepExecution stepExecution) {
-        JobExecution jobExecution = stepExecution.getJobExecution();
-        ExecutionContext jobContext = jobExecution.getExecutionContext();
-        this.stockcontrol = (Stockcontrol) jobContext.get("stockcontrol");
-        log.info("retrieved stockcontrol " + stockcontrol.toString() + " from execution context by expression processor");
+        analysis.setTitleId(expression.getShelfmarkBase());
+        analysis.setShelfmark(expression.getShelfmarkBase());
+        analysis.setMab(expression.getBibliographicInformation().toString());
+        return analysis;
     }
 }
