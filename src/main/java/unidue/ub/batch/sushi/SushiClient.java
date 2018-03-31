@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 public class SushiClient {
 
-    private final static String namespaceCounter = "http://www.niso.org/schemas/sushi/counter";
+    private final static String namespaceCounter = "http://www.niso.org/schemas/sushi/counterbuilder";
 
     private final static String namespaceSushi = "http://www.niso.org/schemas/sushi";
 

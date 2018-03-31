@@ -91,7 +91,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         if (countersFound != null) {
             if (countersFound.size() != 0) {
                 counters.addAll(countersFound);
-                log.info("added " + countersFound.size() + " counter statistics.");
+                log.info("added " + countersFound.size() + " counterbuilder statistics.");
             }
         } else {
             log.warn("no counters from conversion!");

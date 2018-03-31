@@ -35,7 +35,7 @@ public class DataWriter implements ItemWriter {
             //else log.info("posted " + objectType + " to api/data/" + objectType.toLowerCase() + " with return status " + status);
             post.releaseConnection();
         }
-        log.info("successfully posted " + succesfullPosts + " of " + list.size() + " counter data.");
+        log.info("successfully posted " + succesfullPosts + " of " + list.size() + " counterbuilder data.");
     }
 
 }
