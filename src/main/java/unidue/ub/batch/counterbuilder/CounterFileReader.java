@@ -1,5 +1,7 @@
 package unidue.ub.batch.counterbuilder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
@@ -13,6 +15,7 @@ import java.util.List;
 
 public class CounterFileReader implements ItemReader<String> {
 
+    Logger log = LoggerFactory.getLogger(CounterFileReader.class);
 
     @Value("#{jobParameters['counter.file.name'] ?: ''}")
     private String filename;
@@ -28,6 +31,8 @@ public class CounterFileReader implements ItemReader<String> {
 
     private List<String> lines;
 
+    private String delimiter;
+
     CounterFileReader() {}
 
     @Override
@@ -42,24 +47,41 @@ public class CounterFileReader implements ItemReader<String> {
 
     private void readLines() throws IOException {
         lines = new ArrayList<>();
-        File file = new File(dataDir + "/counterfiles/"+ filename);
+        File file = new File(dataDir + "/counterbuilder/"+ filename);
         BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-        bufferedReader.skip(initalLines);
         String readLine;
         int numberOfLines = 0;
+        int databaseLineCounter = 0;
         String databaseLine = "";
         while ((readLine = bufferedReader.readLine()) != null ) {
-            if (type.equals("database")) {
-                databaseLine += "/" + readLine;
+            if(numberOfLines < initalLines) {
                 numberOfLines++;
-                if  (numberOfLines == 4) {
+                continue;
+            }
+            readLine = readLine.toLowerCase();
+            if (type.equals("database")) {
+                if (readLine.contains(delimiter + "sessions" + delimiter)) {
+                    log.info("skipping line");
+                    continue;
+                }
+
+                databaseLine += "/" + readLine;
+                databaseLineCounter++;
+                if  (databaseLineCounter == 4) {
                     lines.add(databaseLine);
+                    databaseLine = "";
+                    databaseLineCounter = 0;
                 }
             } else if (!readLine.isEmpty()) {
+                if (readLine.contains("total for all")) {
+                    log.info("skipping line");
+                    continue;
+                }
                 lines.add(readLine);
             }
         }
         collected = true;
+        log.info("read " + lines.size() + " lines of counter data");
     }
 
     @BeforeStep
@@ -67,6 +89,7 @@ public class CounterFileReader implements ItemReader<String> {
         JobExecution jobExecution = stepExecution.getJobExecution();
         ExecutionContext jobContext = jobExecution.getExecutionContext();
         this.type = (String) jobContext.get("type");
-        this.initalLines = (Integer) jobContext.get("initalLines");
+        this.delimiter = (String) jobContext.get("delimiter");
+        this.initalLines = (Integer) jobContext.get("inital.lines");
     }
 }

@@ -29,7 +29,7 @@ public class CounterbuilderConfiguration {
 
     @Bean
     @StepScope
-    public CounterProcessor counterProcessor() {
+    public CounterProcessor counterbuilderProcessor() {
         return new CounterProcessor();
     }
 
@@ -41,32 +41,32 @@ public class CounterbuilderConfiguration {
 
     @Bean
     @StepScope
-    public TypeAndFormatDeterminerTasklet startingTasklet() {
+    public TypeAndFormatDeterminerTasklet typeAndFormatDeterminerTasklet() {
         return new TypeAndFormatDeterminerTasklet();
     }
 
     @Bean
-    public Step init() {
-        return stepBuilderFactory.get("init")
-                .tasklet(startingTasklet())
+    public Step counterbuilderInit() {
+        return stepBuilderFactory.get("counterbuilderInit")
+                .tasklet(typeAndFormatDeterminerTasklet())
                 .build();
     }
 
     @Bean
-    public Step step() {
-        return stepBuilderFactory.get("step")
+    public Step counterbuilderStep() {
+        return stepBuilderFactory.get("counterbuilderStep")
                 .<String, CounterCollection>chunk(10000)
                 .reader(counterFileReader())
-                .processor(counterProcessor())
+                .processor(counterbuilderProcessor())
                 .writer(counterCollectionWriter())
                 .build();
     }
 
     @Bean
-    public Job nrequestsJob() {
-        return jobBuilderFactory.get("counterReaderJob")
-                .start(init())
-                .next(step())
+    public Job counterbuilderJob () {
+        return jobBuilderFactory.get("counterbuilderJob")
+                .start(counterbuilderInit())
+                .next(counterbuilderStep())
                 .build();
     }
 
