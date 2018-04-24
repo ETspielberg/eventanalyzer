@@ -37,8 +37,7 @@ public class NrequestsConfiguration {
     @Bean
     @StepScope
     public DataWriter writer() {
-        DataWriter writer = new DataWriter();
-        return writer;
+        return new DataWriter();
     }
 
     @Bean

@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Manifestation;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class NrequestsReader implements ItemReader<Manifestation> {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public Manifestation read() throws Exception {
+    public Manifestation read() {
         if (!collected)
             collectManifestationsByOpenRequests();
         if (manifestations.size() > 0)
@@ -28,7 +27,7 @@ public class NrequestsReader implements ItemReader<Manifestation> {
         return null;
     }
 
-    private void collectManifestationsByOpenRequests() throws IOException {
+    private void collectManifestationsByOpenRequests() {
         collected = true;
         ResponseEntity<Manifestation[]> response = new RestTemplate().getForEntity(
                 "http://localhost:8082/getter/manifestations?identifier=&exact=&mode=openRequests",
@@ -36,12 +35,7 @@ public class NrequestsReader implements ItemReader<Manifestation> {
         );
         log.info("found " + response.getBody().length + " manifestations with open requests");
 
-        Manifestation[] foundManifestations = response.getBody();
-        int totalNumber = foundManifestations.length;
-        for (int i = 0; i < totalNumber; i++) {
-            Manifestation manifestation = foundManifestations[i];
-            double fraction = 100 * (double) i / (double) totalNumber;
-            log.info("retrieving details for manifestation " + i + " (" + manifestation.getTitleID() + ") of " + totalNumber + "(" + fraction + " %)");
+        for (Manifestation manifestation : response.getBody()) {
             try {
                 ResponseEntity<Manifestation> responseInd = new RestTemplate().getForEntity(
                         "http://localhost:8082/getter/buildActiveManifestation?identifier=" + manifestation.getTitleID(),
