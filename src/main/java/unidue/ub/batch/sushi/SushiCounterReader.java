@@ -74,7 +74,6 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 }
             }
             case "year": {
-
                 for (int i = 1; i<= 12; i++) {
                     LocalDateTime start = LocalDateTime.of(year,i,1,0,0);
                     LocalDateTime end = start.plusMonths(1).minusDays(1);
