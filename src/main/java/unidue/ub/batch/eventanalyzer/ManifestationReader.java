@@ -12,6 +12,7 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.client.Traverson;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Notation;
@@ -100,11 +101,15 @@ public class ManifestationReader implements ItemReader<Manifestation> {
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
                 if (titleID != null) {
-                    ResponseEntity<Manifestation> fullManifestation = new RestTemplate().getForEntity(
-                            "http://localhost:8082/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
-                            Manifestation.class
-                    );
-                    manifestationData.add(fullManifestation.getBody());
+                    try {
+                        ResponseEntity<Manifestation> fullManifestation = new RestTemplate().getForEntity(
+                                "http://localhost:8082/getter/buildFullManifestation?identifier=" + manifestation.getTitleID(),
+                                Manifestation.class
+                        );
+                        manifestationData.add(fullManifestation.getBody());
+                    } catch (ResourceAccessException rea) {
+                        log.warn("could not retrieve full manifestation for " + manifestation.getTitleID());
+                    }
                 }
             }
         }
