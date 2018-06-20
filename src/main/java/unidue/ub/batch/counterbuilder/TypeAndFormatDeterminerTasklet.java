@@ -82,6 +82,9 @@ public class TypeAndFormatDeterminerTasklet implements Tasklet{
         String[] parts = readLine.split(delimiter);
         for (int i = 0; i< parts.length; i++) {
             switch (parts[i]) {
+                case "title" : {
+                    fieldMap.put(i, "title");
+                }
                 case "database" : {
                     fieldMap.put(i, "title");
                     break;

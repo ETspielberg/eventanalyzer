@@ -16,14 +16,13 @@ import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @StepScope
-public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
+public class SushiCounterReader implements ItemReader<Object> {
 
     private Sushiprovider sushiprovider;
     @Value("#{jobParameters['sushi.mode'] ?: 'update'}")
@@ -32,7 +31,6 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
     private String type;
     @Value("#{jobParameters['sushi.year'] ?: 2017}")
     private int year;
-    private SOAPMessage soapMessage;
     private List<Counter> counters;
     private boolean collected = false;
 
@@ -82,7 +80,7 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
                 }
             }
         }
-        log.info("collected " + counters.size() + " counters in total");
+        log.info("collected " + counters.size() + " " + type + "-counters for SUSHI provider " + sushiprovider.getName());
         collected = true;
     }
 
@@ -107,15 +105,9 @@ public class SushiCounterReader<SoapMessage> implements ItemReader<Object> {
         List<Counter> countersFound = new ArrayList<>();
         sushiClient.setStartTime(start);
         sushiClient.setEndTime(end);
-        soapMessage = sushiClient.getResponse();
+        SOAPMessage soapMessage = sushiClient.getResponse();
         if (soapMessage != null) {
             countersFound = (List<Counter>) CounterTools.convertSOAPMessageToCounters(soapMessage);
-            /*
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            soapMessage.writeTo(out);
-            String strMsg = new String(out.toByteArray());
-            log.info(strMsg);
-             */
         }
         else
             log.warn("no SOAP response!");

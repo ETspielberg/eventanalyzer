@@ -37,9 +37,13 @@ public class ExpressionReader implements ItemReader<Expression> {
         if (noExpressionsFound) {
             collectManifestation();
         }
-        if (expressionEnumeration.hasMoreElements())
-            return expressionEnumeration.nextElement();
-        else return null;
+        try {
+            if (expressionEnumeration.hasMoreElements())
+                return expressionEnumeration.nextElement();
+            else return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void collectManifestation() throws URISyntaxException {

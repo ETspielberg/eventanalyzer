@@ -16,7 +16,6 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 
 import java.util.List;
-import java.util.Map;
 
 public class DataWriter implements ItemWriter {
 
@@ -27,10 +26,12 @@ public class DataWriter implements ItemWriter {
     @Override
     public void write(List list) throws Exception {
         long successful = 0;
+        String type = "";
         for (Object object : list) {
             String json = mapper.writeValueAsString(object);
             HttpClient client = new HttpClient(httpConnectionManager);
             String objectType = object.getClass().getSimpleName();
+            type = objectType.toLowerCase();
             PostMethod post = new PostMethod("http://localhost:8082/api/data/" + objectType.toLowerCase());
             RequestEntity entity = new StringRequestEntity(json, "application/json", null);
             post.setRequestEntity(entity);
@@ -40,7 +41,7 @@ public class DataWriter implements ItemWriter {
             //else log.info("posted " + objectType + " to api/data/" + objectType.toLowerCase() + " with return status " + status);
             post.releaseConnection();
         }
-        log.info("successfully posted " + successful + " of " + list.size() + " counterbuilder data.");
+        log.info("successfully posted " + successful + " of " + list.size() + " " + type + " data.");
     }
 
 }
