@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @StepScope
-public class SushiCounterReader implements ItemReader<Object> {
+public class SushiCounterReader implements ItemReader<Counter> {
 
     private Sushiprovider sushiprovider;
     @Value("#{jobParameters['sushi.mode'] ?: 'update'}")

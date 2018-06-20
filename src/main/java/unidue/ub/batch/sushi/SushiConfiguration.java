@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import unidue.ub.batch.DataWriter;
+import unidue.ub.media.analysis.Counter;
 import unidue.ub.media.analysis.Eventanalysis;
 import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Status;
@@ -79,7 +80,7 @@ public class SushiConfiguration {
     @Bean
     public Step step() {
         return stepBuilderFactory.get("step")
-                .<Manifestation, Eventanalysis>chunk(10000)
+                .<Counter, Counter>chunk(10000)
                 .reader(reader())
                 .writer(writer())
                 .build();
