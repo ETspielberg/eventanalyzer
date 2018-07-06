@@ -47,13 +47,13 @@ public class CounterProcessor implements ItemProcessor<String, CounterCollection
             break;
         }
         case "ebook": {
-            convertLinToEbookCounters(line);
+            convertLineToEbookCounters(line);
         }
     }
     return new CounterCollection(counters);
     }
 
-    private void convertLinToEbookCounters(String line) {
+    private void convertLineToEbookCounters(String line) {
         String[] parts = line.split(delimiter);
         log.info("converting line to ebook counters for " + parts[0]);
         for (Integer dateKey : dateKeys) {
