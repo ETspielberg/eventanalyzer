@@ -32,7 +32,6 @@ public class EventAnalyzer {
     private static final Logger log = Logger.getLogger(EventAnalyzer.class);
     private String irrelevantUserCategories;
     private String relevantItemCategories;
-    private UsageCounters usagecounter = new UsageCounters();
     private Map<String, String> userGroups;
     private Map<String, String> itemGroups;
 
@@ -50,6 +49,8 @@ public class EventAnalyzer {
     Eventanalysis analyze(List<Event> events, Stockcontrol stockcontrol) throws URISyntaxException {
         Collections.sort(events);
 
+        UsageCounters usagecounter = new UsageCounters();
+
         //build new analysis and set some fields
         Eventanalysis analysis = new Eventanalysis();
         analysis.setDate(new Date());
@@ -58,7 +59,6 @@ public class EventAnalyzer {
         if (stockcontrol.getIdentifier() != null)
             analysis.setStockcontrolId(stockcontrol.getIdentifier());
 
-        usagecounter.reset();
         //start analysis
         if (!events.isEmpty()) {
             prepareUserCategories();
@@ -91,7 +91,7 @@ public class EventAnalyzer {
                 if (eventDate.isAfter(TODAY))
                     continue;
 
-                updateItemCounter(event);
+                usagecounter = updateItemCounter(event, usagecounter);
                 int timeIntervall = TODAY.getYear() - eventDate.getYear();
                 long loans = usagecounter.getCorrectedLoans();
                 for (int i = timeIntervall; i <= yearsBefore; i++) {
@@ -233,7 +233,7 @@ public class EventAnalyzer {
         return slope;
     }
 
-    private void updateItemCounter(Event event) {
+    private UsageCounters updateItemCounter(Event event, UsageCounters usagecounter) {
         switch (event.getType()) {
             case "loan": {
                 if (event.getBorrowerStatus() != null) {
@@ -296,6 +296,7 @@ public class EventAnalyzer {
                 usagecounter.calds++;
             }
         }
+        return usagecounter;
     }
 
     private void prepareUserCategories() throws URISyntaxException {

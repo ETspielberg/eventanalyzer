@@ -41,6 +41,19 @@ public class UsageCounters implements Cloneable {
      */
 
     public UsageCounters() {
+        studentLoans = 0;
+        internLoans = 0;
+        externLoans = 0;
+        happLoans = 0;
+        elseLoans = 0;
+        stock = 0;
+        stockLendable = 0;
+        stockDeleted = 0;
+        requests = 0;
+        calds = 0;
+        daysLoaned = 0;
+        daysRequested = 0;
+        daysStockLendable = 0;
     }
 
     public void reset() {
