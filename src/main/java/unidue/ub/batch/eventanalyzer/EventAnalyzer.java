@@ -172,44 +172,25 @@ public class EventAnalyzer {
             analysis.setLastStock(usagecounter.stock);
             analysis.setLastStockLendable(usagecounter.getStockLendable());
 
-
             double staticBuffer = stockcontrol.getStaticBuffer();
-            double variableBuffer = stockcontrol.getVariableBuffer();
-
             int proposedDeletion = 0;
-            double ratio = 1;
-            if (analysis.getMaxRelativeLoan() != 0)
-                ratio = analysis.getMeanRelativeLoan() / analysis.getMaxRelativeLoan();
 
-            if (staticBuffer < 1 && variableBuffer < 1)
+            if (staticBuffer < 1)
                 proposedDeletion = ((int) ((usagecounter.stock - analysis.getMaxLoansAbs()) * (1
-                        - staticBuffer
-                        - variableBuffer * ratio)));
-            else if (staticBuffer >= 1 && variableBuffer < 1)
+                        - staticBuffer)));
+            else if (staticBuffer >= 1)
                 proposedDeletion = (
-                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs() - staticBuffer)
-                                * (1 - variableBuffer * ratio)));
-            else if (staticBuffer >= 1 && variableBuffer >= 1)
-                proposedDeletion = (
-                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs() - staticBuffer)
-                                - variableBuffer * ratio));
-            else if (staticBuffer < 1 && variableBuffer < 1)
-                proposedDeletion = (
-                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs()) * (1 - staticBuffer)
-                                - variableBuffer * ratio));
-
+                        (int) ((usagecounter.stock - analysis.getMaxLoansAbs() - staticBuffer)));
             if (proposedDeletion < 0)
                 analysis.setProposedDeletion(0);
             else
                 analysis.setProposedDeletion(proposedDeletion);
-            if (analysis.getProposedDeletion() == 0 && ratio > 0.5)
-                analysis.setProposedPurchase((int) (-1 * analysis.getLastStock() * 0.001 * ratio));
             if (events.size() > 0) {
                 if (LocalDate.parse(events.get(0).getDate().substring(0, 10), dtf).isAfter(miniumumDate))
                     analysis.setProposedDeletion(0);
             }
 
-            if (analysis.getLastStock() - analysis.getProposedDeletion() < 2 && analysis.getLastStock() >= 3)
+            if (analysis.getLastStock() - analysis.getProposedDeletion() <= 2 && analysis.getLastStock() >= 3)
                 analysis.setComment("ggf. umstellen");
 
             if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= stockcontrol.getMinimumDaysOfRequest()) {
