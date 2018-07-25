@@ -46,11 +46,11 @@ class ItemFilter {
      * @return boolean true, if item matches filter
      */
     boolean matches(Item item) {
-        return materialMatches(item.getMaterial()) && collectionMatches(item.getCollection());
+        return (materialMatches(item.getMaterial()) && collectionMatches(item.getCollection()));
     }
 
     private boolean materialMatches(String material) {
-        return (material == null) || materials.isEmpty() || materials.contains(material.trim());
+        return ((material == null) || materials.isEmpty() || materials.contains(material.trim()));
     }
 
     private boolean collectionMatches(String collection) {

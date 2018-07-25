@@ -7,6 +7,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.beans.AbstractNestablePropertyAccessor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -77,6 +78,10 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         analysis.setTitleId(manifestation.getTitleID());
         analysis.setShelfmark(manifestation.getShelfmark());
         analysis.setMab(manifestation.getBibliographicInformation().getFullDescription());
+        StringBuilder collections = new StringBuilder();
+        for (String collection: manifestation.getCollections())
+            collections.append(" ").append(collection);
+        analysis.setComment(collections.toString());
         return analysis;
     }
     }

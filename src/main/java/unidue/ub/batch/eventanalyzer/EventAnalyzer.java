@@ -189,10 +189,6 @@ public class EventAnalyzer {
                 if (LocalDate.parse(events.get(0).getDate().substring(0, 10), dtf).isAfter(miniumumDate))
                     analysis.setProposedDeletion(0);
             }
-
-            if (analysis.getLastStock() - analysis.getProposedDeletion() <= 2 && analysis.getLastStock() >= 3)
-                analysis.setComment("ggf. umstellen");
-
             if ((double) analysis.getDaysRequested() / (double) analysis.getNumberRequests() >= stockcontrol.getMinimumDaysOfRequest()) {
                 analysis.setProposedPurchase(analysis.getMaxItemsNeeded() - analysis.getLastStock());
             }
