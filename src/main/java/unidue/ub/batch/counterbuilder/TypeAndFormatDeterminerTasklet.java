@@ -67,8 +67,6 @@ public class TypeAndFormatDeterminerTasklet implements Tasklet{
         ExecutionContext stepContext = chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext();
         log.info("type of usage data is " + type + ", delimited by '" + delimiter + "' and with " + initialLines + " initial lines");
         stepContext.put("fieldMap", fieldMap);
-        log.info(fieldMap.toString());
-        log.info(datesMap.toString());
         stepContext.put("datesMap", datesMap);
         stepContext.put("type", type);
         stepContext.put("delimiter", delimiter);
@@ -114,7 +112,13 @@ public class TypeAndFormatDeterminerTasklet implements Tasklet{
                     break;
                 }
                 case "": {
-                    fieldMap.put(i, "title");
+                    if (i == 0)
+                        fieldMap.put(i, "title");
+                    break;
+                }
+                case " ": {
+                    if (i == 0)
+                        fieldMap.put(i, "title");
                     break;
                 }
                 case "book doi": {
@@ -134,7 +138,7 @@ public class TypeAndFormatDeterminerTasklet implements Tasklet{
                     break;
                 }
                 case "proprietary identifier": {
-                    fieldMap.put(i, "proprietary");
+                    fieldMap.put(i, "proprietaryIdentifier");
                     break;
                 }
                 case "journal doi": {
@@ -148,14 +152,14 @@ public class TypeAndFormatDeterminerTasklet implements Tasklet{
                     String part = parts[i].trim();
                     if (part.contains(" "))
                         part = part.replace(" ", "-");
-                    String monthRegex = "(jan?|feb?|mar?|apr?|may?|jun?|jul?|aug?|sep?|oct?|nov?|dec?)-(19|20)?\\d\\d";
+                    String monthRegex = "(jan?|feb?|mar?|apr?|may?|jun?|jul?|aug?|sep?|oct?|nov?|dec?)(-| )(19|20)?\\d\\d";
                     if (part.matches(monthRegex)){
                         String month = part.substring(0,3);
                         String yearString = part.substring(4);
                         Integer year  = Integer.parseInt(yearString);
-                        if (year < 50 ) {
+                        if (year < 90 ) {
                             year += 2000;
-                        } else if (year > 50 && year < 100) {
+                        } else if (year > 90 && year < 100) {
                             year += 1900;
                         }
                         switch (month) {

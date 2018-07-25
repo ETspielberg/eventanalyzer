@@ -14,8 +14,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import unidue.ub.batch.DataWriter;
 import unidue.ub.media.analysis.Counter;
-import unidue.ub.media.analysis.Eventanalysis;
-import unidue.ub.media.monographs.Manifestation;
 import unidue.ub.settings.fachref.Status;
 
 @Configuration

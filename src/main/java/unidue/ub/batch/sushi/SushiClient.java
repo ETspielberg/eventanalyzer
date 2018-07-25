@@ -26,10 +26,10 @@ public class SushiClient {
     SushiClient() {
         LocalDateTime TODAY = LocalDateTime.now();
         int timeshift;
-        if (TODAY.getDayOfMonth() < 15)
-            timeshift = 3;
-        else
+        if (TODAY.getDayOfMonth() < 20)
             timeshift = 2;
+        else
+            timeshift = 1;
         startTime = LocalDateTime.now().minusMonths(timeshift).withDayOfMonth(1);
         endTime = LocalDateTime.now().minusMonths(timeshift - 1).withDayOfMonth(1).minusDays(1);
         release = 4;

@@ -58,9 +58,8 @@ public class CounterFileReader implements ItemReader<String> {
                 numberOfLines++;
                 continue;
             }
-            readLine = readLine.toLowerCase();
             if (type.equals("database")) {
-                if (readLine.contains(delimiter + "sessions" + delimiter)) {
+                if (readLine.toLowerCase().contains(delimiter + "sessions" + delimiter)) {
                     log.info("skipping line");
                     continue;
                 }
@@ -73,7 +72,7 @@ public class CounterFileReader implements ItemReader<String> {
                     databaseLineCounter = 0;
                 }
             } else if (!readLine.isEmpty()) {
-                if (readLine.contains("total for all")) {
+                if (readLine.toLowerCase().contains("total for all")) {
                     log.info("skipping line");
                     continue;
                 }

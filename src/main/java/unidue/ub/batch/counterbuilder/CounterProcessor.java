@@ -59,14 +59,14 @@ public class CounterProcessor implements ItemProcessor<String, CounterCollection
         for (Integer dateKey : dateKeys) {
             BeanWrapper wrapper = new BeanWrapperImpl(new EbookCounter());
             for (Integer fieldKey : fieldKeys) {
-                wrapper.setPropertyValue(fieldMap.get(fieldKey), parts[fieldKey]);
+                wrapper.setPropertyValue(fieldMap.get(fieldKey), parts[fieldKey].trim());
             }
-            String datesString = datesMap.get(dateKey);
+            String datesString = datesMap.get(dateKey).trim();
             int month = Integer.parseInt(datesString.substring(0,datesString.indexOf("-")));
             wrapper.setPropertyValue("month", month);
             int year = Integer.parseInt(datesString.substring(datesString.indexOf("-")+1));
             wrapper.setPropertyValue("year", year);
-            wrapper.setPropertyValue("totalRequests",parts[dateKey]);
+            wrapper.setPropertyValue("totalRequests",parts[dateKey].trim());
             EbookCounter ebookCounter = (EbookCounter) wrapper.getWrappedInstance();
             ebookCounter.caluclateId();
             counters.add(ebookCounter);

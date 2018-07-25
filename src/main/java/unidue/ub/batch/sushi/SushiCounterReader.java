@@ -1,5 +1,11 @@
 package unidue.ub.batch.sushi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jdom2.JDOMException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +17,14 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Value;
 import unidue.ub.media.analysis.Counter;
+import unidue.ub.media.analysis.CounterLog;
 import unidue.ub.media.tools.CounterTools;
 import unidue.ub.settings.fachref.Sushiprovider;
 
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +39,8 @@ public class SushiCounterReader implements ItemReader<Counter> {
     private String type;
     @Value("#{jobParameters['sushi.year'] ?: 2017}")
     private int year;
+    @Value("#{jobParameters['sushi.month'] ?: 1}")
+    private int month;
     private List<Counter> counters;
     private boolean collected = false;
 
@@ -72,16 +82,62 @@ public class SushiCounterReader implements ItemReader<Counter> {
                 }
             }
             case "year": {
-                for (int i = 1; i<= 12; i++) {
-                    LocalDateTime start = LocalDateTime.of(year,i,1,0,0);
-                    LocalDateTime end = start.plusMonths(1).minusDays(1);
-                    List<Counter> countersFound = executeSushiClient(sushiClient,start,end);
+                for (int i = month; i<= 12; i++) {
+                    List<Counter> countersFound = retrieveCounters(i, sushiClient);
                     addCountersToList(countersFound);
                 }
             }
+            case "month": {
+                List<Counter> countersFound = retrieveCounters(month, sushiClient);
+                addCountersToList(countersFound);
+            }
         }
+
         log.info("collected " + counters.size() + " " + type + "-counters for SUSHI provider " + sushiprovider.getName());
         collected = true;
+    }
+
+    private List<Counter> retrieveCounters(int monthToBeCollected, SushiClient sushiClient) {
+        CounterLog counterLog = new CounterLog();
+        counterLog.setSushiprovider(sushiprovider.getName());
+        counterLog.setYear(year);
+        counterLog.setMonth(monthToBeCollected);
+        counterLog.setReportType(type);
+        LocalDateTime start = LocalDateTime.of(year, monthToBeCollected,1,0,0);
+        LocalDateTime end = start.plusMonths(1).minusDays(1);
+        try {
+            List<Counter> countersFound = executeSushiClient(sushiClient,start,end);
+            counterLog.setStatus("SUCCESS");
+            counterLog.setComment("collected " + countersFound.size() + " " + type + "-counters");
+            saveCounterLog(counterLog);
+            addCountersToList(countersFound);
+            return countersFound;
+        } catch (Exception e) {
+            counterLog.setError(e.getMessage());
+            counterLog.setStatus("ERROR");
+            saveCounterLog(counterLog);
+            return null;
+        }
+    }
+
+    private int saveCounterLog(CounterLog counterLog) {
+        try {
+            String json = new ObjectMapper().writeValueAsString(counterLog);
+            HttpClient client = new HttpClient();
+            PostMethod post = new PostMethod("http://localhost:8082/api/data/counterlog");
+            RequestEntity entity = new StringRequestEntity(json, "application/json", null);
+            post.setRequestEntity(entity);
+            return client.executeMethod(post);
+        } catch (JsonProcessingException e) {
+            log.warn("could not convert counter log to json.");
+            return 0;
+        } catch (UnsupportedEncodingException e) {
+            log.warn("could not post counter log.");
+            return 0;
+        } catch (IOException e) {
+            log.warn("could not post counter log");
+            return 0;
+        }
     }
 
     private void addCountersToList(List<Counter> countersFound) {
