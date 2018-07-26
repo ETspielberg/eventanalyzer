@@ -94,11 +94,12 @@ public class ManifestationReader implements ItemReader<Manifestation> {
         }
         manifestationData = new ArrayList<>();
         for (String notation : notations) {
-            ResponseEntity<Manifestation[]> manifestations = new RestTemplate().getForEntity(
-                    "http://localhost:8082/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
-                    Manifestation[].class
-            );
-            log.info("queried notation " + notation);
+            try {
+                ResponseEntity<Manifestation[]> manifestations = new RestTemplate().getForEntity(
+                        "http://localhost:8082/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
+                        Manifestation[].class
+                );
+                log.info("queried notation " + notation);
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
                 log.info("querying manifestation " + titleID);
@@ -113,6 +114,10 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                         log.warn("could not retrieve full manifestation for " + manifestation.getTitleID());
                     }
                 }
+            }
+            } catch (Exception e) {
+                log.warn("could not get manifestations for " + notation);
+                log.error(e.getMessage());
             }
         }
     }
