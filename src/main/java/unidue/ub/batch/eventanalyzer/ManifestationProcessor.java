@@ -82,6 +82,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         for (String collection: manifestation.getCollections())
             collections.append(" ").append(collection);
         analysis.setComment(collections.toString());
+        log.info("analyzed manifestation " + manifestation.getTitleID() + " succesfully.");
         return analysis;
     }
     }

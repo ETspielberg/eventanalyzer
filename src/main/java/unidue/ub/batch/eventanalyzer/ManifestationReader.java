@@ -98,8 +98,10 @@ public class ManifestationReader implements ItemReader<Manifestation> {
                     "http://localhost:8082/getter/manifestations?identifier=" + notation + "&exact=&mode=notation",
                     Manifestation[].class
             );
+            log.info("queried notation " + notation);
             for (Manifestation manifestation : manifestations.getBody()) {
                 String titleID = manifestation.getTitleID();
+                log.info("querying manifestation " + titleID);
                 if (titleID != null) {
                     try {
                         ResponseEntity<Manifestation> fullManifestation = new RestTemplate().getForEntity(
