@@ -107,7 +107,7 @@ public class EventanalyzerConfiguration {
     }
 
     @Bean
-    public Job eventanalyzerJob(JobExecutionListener listener) {
+    public Job eventanalyzerJob() {
         FlowBuilder<Flow> flowBuilder = new FlowBuilder<>("eventanalyzerFlow");
         Flow flow = flowBuilder
                 .start(initStockcontrol())
@@ -124,7 +124,6 @@ public class EventanalyzerConfiguration {
                 .end();
         return jobBuilderFactory.get("eventanalyzerJob")
                 .incrementer(new RunIdIncrementer())
-                .listener(listener)
                 .start(flow)
                 .end()
                 .build();
