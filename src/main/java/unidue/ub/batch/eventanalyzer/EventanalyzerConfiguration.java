@@ -171,7 +171,7 @@ public class EventanalyzerConfiguration {
     @Bean
     public Step step2Expression() {
         return stepBuilderFactory.get("step2Expression")
-                .<Expression, Eventanalysis>chunk(1000)
+                .<Expression, Eventanalysis>chunk(50)
                 .reader(expressionReader(manifestationReader()))
                 .processor(expressionProcessor())
                 .writer(writer())
@@ -181,7 +181,7 @@ public class EventanalyzerConfiguration {
     @Bean
     public Step step2Manifestation() {
         return stepBuilderFactory.get("step2")
-                .<Manifestation, Eventanalysis>chunk(1000)
+                .<Manifestation, Eventanalysis>chunk(50)
                 .reader(manifestationReader())
                 .processor(manifestationProcessor())
                 .writer(writer())
