@@ -93,7 +93,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
             }
         }
         numberOfItems.forEach(
-                (key,value) -> collections.append(" ").append(String.valueOf(value)).append("* ").append(value)
+                (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")
         );
         analysis.setComment(collections.toString());
         log.info("analyzed manifestation " + manifestation.getTitleID() + " succesfully.");

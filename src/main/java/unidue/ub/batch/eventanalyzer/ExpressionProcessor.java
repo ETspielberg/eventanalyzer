@@ -92,7 +92,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
             }
         }
         numberOfItems.forEach(
-                (key,value) -> collections.append(" ").append(String.valueOf(value)).append("* ").append(value)
+                (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")
         );
         analysis.setTitleId(expression.getShelfmarkBase());
         analysis.setShelfmark(expression.getShelfmarkBase());
