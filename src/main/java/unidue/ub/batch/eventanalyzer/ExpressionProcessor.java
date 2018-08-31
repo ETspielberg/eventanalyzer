@@ -21,6 +21,7 @@ import unidue.ub.settings.fachref.Stockcontrol;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 @StepScope
@@ -76,7 +77,23 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
                 }
             }
         }
+        StringBuilder collections = new StringBuilder();
+        HashMap<String,Integer> numberOfItems = new HashMap<>();
         Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
+        for (Item item: expression.getItems()) {
+            if (item.getDeletionDate() != null) {
+                if (numberOfItems.containsKey(item.getCollection())) {
+                    Integer count = numberOfItems.get(item.getCollection());
+                    count = count +1;
+                    numberOfItems.put(item.getCollection(), count);
+                } else {
+                    numberOfItems.put(item.getCollection(),1);
+                }
+            }
+        }
+        numberOfItems.forEach(
+                (key,value) -> collections.append(" ").append(String.valueOf(value)).append("* ").append(value)
+        );
         analysis.setTitleId(expression.getShelfmarkBase());
         analysis.setShelfmark(expression.getShelfmarkBase());
         analysis.setMab(expression.getBibliographicInformation().toString());

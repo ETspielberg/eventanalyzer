@@ -21,6 +21,7 @@ import unidue.ub.settings.fachref.Stockcontrol;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 public class ManifestationProcessor implements ItemProcessor<Manifestation, Eventanalysis> {
@@ -79,8 +80,21 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         analysis.setShelfmark(manifestation.getShelfmark());
         analysis.setMab(manifestation.getBibliographicInformation().getFullDescription());
         StringBuilder collections = new StringBuilder();
-        for (String collection: manifestation.getCollections())
-            collections.append(" ").append(collection);
+        HashMap<String,Integer> numberOfItems = new HashMap<>();
+        for (Item item: manifestation.getItems()) {
+            if (item.getDeletionDate() != null) {
+                if (numberOfItems.containsKey(item.getCollection())) {
+                    Integer count = numberOfItems.get(item.getCollection());
+                    count = count +1;
+                    numberOfItems.put(item.getCollection(), count);
+                } else {
+                    numberOfItems.put(item.getCollection(),1);
+                }
+            }
+        }
+        numberOfItems.forEach(
+                (key,value) -> collections.append(" ").append(String.valueOf(value)).append("* ").append(value)
+        );
         analysis.setComment(collections.toString());
         log.info("analyzed manifestation " + manifestation.getTitleID() + " succesfully.");
         return analysis;
