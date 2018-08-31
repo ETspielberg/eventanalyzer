@@ -1,5 +1,6 @@
 package unidue.ub.batch.eventanalyzer;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
@@ -95,7 +96,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         numberOfItems.forEach(
                 (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")
         );
-        analysis.setComment(collections.toString());
+        analysis.setComment(StringUtils.removeEnd(collections.toString(),","));
         log.info("analyzed manifestation " + manifestation.getTitleID() + " succesfully.");
         return analysis;
     }
