@@ -96,7 +96,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         numberOfItems.forEach(
                 (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")
         );
-        analysis.setComment(StringUtils.removeEnd(collections.toString(),","));
+        analysis.setComment(StringUtils.removeEnd(collections.toString().trim(),","));
         log.info("analyzed manifestation " + manifestation.getTitleID() + " succesfully.");
         return analysis;
     }
