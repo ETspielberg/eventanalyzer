@@ -83,7 +83,9 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         StringBuilder collections = new StringBuilder();
         HashMap<String,Integer> numberOfItems = new HashMap<>();
         for (Item item: manifestation.getItems()) {
-            if (item.getDeletionDate() != null) {
+            if (item.getDeletionDate() == null || item.getDeletionDate().isEmpty())
+            continue;
+            else {
                 if (numberOfItems.containsKey(item.getCollection())) {
                     Integer count = numberOfItems.get(item.getCollection());
                     count = count +1;
