@@ -81,7 +81,7 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
         HashMap<String,Integer> numberOfItems = new HashMap<>();
         Eventanalysis analysis = new EventAnalyzer().analyze(events, stockcontrol);
         for (Item item: expression.getItems()) {
-            if (item.getDeletionDate() != null) {
+            if (item.getDeletionDate() == null || item.getDeletionDate().isEmpty()) {
                 if (numberOfItems.containsKey(item.getCollection())) {
                     Integer count = numberOfItems.get(item.getCollection());
                     count = count +1;
@@ -90,6 +90,8 @@ public class ExpressionProcessor implements ItemProcessor<Expression, Eventanaly
                     numberOfItems.put(item.getCollection(),1);
                 }
             }
+            else
+                continue;
         }
         numberOfItems.forEach(
                 (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")

@@ -83,9 +83,7 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
         StringBuilder collections = new StringBuilder();
         HashMap<String,Integer> numberOfItems = new HashMap<>();
         for (Item item: manifestation.getItems()) {
-            if (item.getDeletionDate() == null || item.getDeletionDate().isEmpty())
-            continue;
-            else {
+            if (item.getDeletionDate() == null || item.getDeletionDate().isEmpty()) {
                 if (numberOfItems.containsKey(item.getCollection())) {
                     Integer count = numberOfItems.get(item.getCollection());
                     count = count +1;
@@ -94,6 +92,8 @@ public class ManifestationProcessor implements ItemProcessor<Manifestation, Even
                     numberOfItems.put(item.getCollection(),1);
                 }
             }
+            else
+                continue;
         }
         numberOfItems.forEach(
                 (key,value) -> collections.append(String.valueOf(value)).append("* ").append(key).append(", ")
